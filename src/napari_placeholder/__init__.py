@@ -9,5 +9,4 @@ __all__ = (
     "write_single_image",
     "write_multiple",
     "ExampleQWidget",
-    "example_magic_widget",
 )

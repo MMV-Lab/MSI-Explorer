@@ -14,12 +14,6 @@ contributions:
     - id: napari-PLACEHOLDER.make_qwidget
       python_name: napari_placeholder._widget:ExampleQWidget
       title: Make example QWidget
-    - id: napari-PLACEHOLDER.make_magic_widget
-      python_name: napari_placeholder._widget:example_magic_widget
-      title: Make example magic widget
-    - id: napari-PLACEHOLDER.make_func_widget
-      python_name: napari_placeholder._widget:example_function_widget
-      title: Make example function widget
   readers:
     - command: napari-PLACEHOLDER.get_reader
       accepts_directories: false
@@ -34,8 +28,3 @@ contributions:
   widgets:
     - command: napari-PLACEHOLDER.make_qwidget
       display_name: Example QWidget
-    - command: napari-PLACEHOLDER.make_magic_widget
-      display_name: Example Magic Widget
-    - command: napari-PLACEHOLDER.make_func_widget
-      autogenerate: true
-      display_name: Example Function Widget
