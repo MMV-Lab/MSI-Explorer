@@ -1,10 +1,13 @@
 from typing import TYPE_CHECKING
 
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget, QComboBox, QLabel, QVBoxLayout, QScrollArea, QLineEdit, QFrame
+from qtpy.QtWidgets import (QHBoxLayout, QPushButton, QWidget, QComboBox, QLabel, QVBoxLayout,
+                            QScrollArea, QLineEdit, QFrame)
 from qtpy.QtCore import Qt, QRect
 
 if TYPE_CHECKING:
     import napari
+    
+from ._selection import SelectionWindow
 
 # TODO: check tests
 class ExampleQWidget(QWidget):
@@ -114,6 +117,9 @@ class ExampleQWidget(QWidget):
 
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(scroll_area)
+        
+        self.selection_window = SelectionWindow()
+        self.selection_window.show()
 
     def _on_click(self):
         print('napari has', len(self.viewer.layers), 'layers')
