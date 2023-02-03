@@ -6,6 +6,9 @@ class SelectionWindow(QWidget):
         super().__init__()
         self.setLayout(QVBoxLayout())
         
+        ### QObjects
+        
+        # Labels
         placeholder = QLabel("This is a placeholder. This will be replaced by the graph later.")
         label_select_database = QLabel("Select database")
         label_mz = QLabel("m/z")
@@ -13,18 +16,23 @@ class SelectionWindow(QWidget):
         label_mode = QLabel("Mode")
         label_mz_annotation = QLabel("")
         
+        # Buttons
         btn_reset_view = QPushButton("Reset")
         btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
         
+        # Radiobuttons
         radio_btn_replace_layer = QRadioButton("Single panel_view")
         radio_btn_add_layer = QRadioButton("Multi")
         radio_btn_replace_layer.toggle()
         
+        # Lineedits
         lineedit_mz_range = QLineEdit()
         
+        # Comboboxes
         combobox_mz = QComboBox()
         
+        ### Organize objects via widgets
         visual_frame = QWidget()
         visual_frame.setLayout(QHBoxLayout())  
         visual_frame.layout().addWidget(placeholder)
@@ -62,3 +70,4 @@ class SelectionWindow(QWidget):
         display_mode_frame.layout().addWidget(radio_btn_add_layer)
         
         self.layout().addWidget(display_mode_frame)
+        
