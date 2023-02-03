@@ -1,22 +1,120 @@
 from typing import TYPE_CHECKING
 
-from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget
+from qtpy.QtWidgets import QHBoxLayout, QPushButton, QWidget, QComboBox, QLabel, QVBoxLayout, QScrollArea, QLineEdit, QFrame
+from qtpy.QtCore import Qt, QRect
 
 if TYPE_CHECKING:
     import napari
 
-
+# TODO: check tests
 class ExampleQWidget(QWidget):
     def __init__(self, napari_viewer):
         super().__init__()
         self.viewer = napari_viewer
 
-        btn = QPushButton("Click me!")
+        label_preprocessing = QLabel('Preprocessing')
+        label_scale = QLabel('Scale:')
+        label_correction = QLabel('Correction:')
+        label_correction_tooltip = 'recalibration/baseline correction'
+        label_correction.setToolTip(label_correction_tooltip)
+        label_noise_reduction = QLabel('noise reduction:')
+        label_roi = QLabel('ROI')
+
+        btn_load_imzml = QPushButton('Load imzML')
+        btn_view_metadata = QPushButton('View Metadata')
+        btn_execute_preprocessing = QPushButton('Execute')
+        btn_analyze_roi = QPushButton('Analyze')
+        btn_minimize_preprocessing = QPushButton('-')
+        
+        combobox_scale = QComboBox()
+        combobox_scale.addItems(['original', 'normalized'])
+        combobox_roi = QComboBox()
+        
+        lineedit_correction = QLineEdit()
+        lineedit_noise_reduction = QLineEdit()
+        
+        preprocessing_minimized = False
+        
+        btn = QPushButton('Click me!')
         btn.clicked.connect(self._on_click)
 
-        self.setLayout(QHBoxLayout())
-        self.layout().addWidget(btn)
+        widget = QWidget()
+        widget.setLayout(QVBoxLayout())
+        
+        top_buttons = QWidget()
+        top_buttons.setLayout(QHBoxLayout())
+        top_buttons.layout().addWidget(btn_load_imzml)
+        top_buttons.layout().addWidget(btn_view_metadata)
+        
+        widget.layout().addWidget(top_buttons)
+        
+        preprocessing_frame = QFrame()
+        preprocessing_frame.setLayout(QVBoxLayout())
+        
+        preprocessing_frame.setStyleSheet("border-width: 1;"
+                                   "border-radius: 3;"
+                                   "border-style: solid;"
+                                   "border-color: rgb(10, 10, 10);"
+                                   )
+        
+        preprocessing_header = QWidget()
+        preprocessing_header.setLayout(QHBoxLayout())
+        preprocessing_header.layout().addWidget(label_preprocessing)
+        preprocessing_header.layout().addWidget(btn_minimize_preprocessing)
+        preprocessing_header.layout().setAlignment(btn_minimize_preprocessing,Qt.AlignRight)
+        
+        preprocessing_frame.layout().addWidget(preprocessing_header)
+        
+        preprocessing_scale = QWidget()
+        preprocessing_scale.setLayout(QHBoxLayout())
+        preprocessing_scale.layout().addWidget(label_scale)
+        preprocessing_scale.layout().addWidget(combobox_scale)
+        
+        preprocessing_frame.layout().addWidget(preprocessing_scale)
+        
+        preprocessing_correction = QWidget()
+        preprocessing_correction.setLayout(QHBoxLayout())
+        preprocessing_correction.layout().addWidget(label_correction)
+        preprocessing_correction.layout().addWidget(lineedit_correction)
+        
+        preprocessing_frame.layout().addWidget(preprocessing_correction)
+        
+        preprocessing_noise_reduction = QWidget()
+        preprocessing_noise_reduction.setLayout(QHBoxLayout())
+        preprocessing_noise_reduction.layout().addWidget(label_noise_reduction)
+        preprocessing_noise_reduction.layout().addWidget(lineedit_noise_reduction)
+        
+        preprocessing_frame.layout().addWidget(preprocessing_noise_reduction)
+        
+        widget.layout().addWidget(preprocessing_frame)
+        
+        roi_frame = QFrame()
+        roi_frame.setLayout(QVBoxLayout())
+        
+        roi_frame.setStyleSheet("border-width: 1;"
+                                   "border-radius: 3;"
+                                   "border-style: solid;"
+                                   "border-color: rgb(10, 10, 10);"
+                                   )
+        roi_frame.layout().addWidget(label_roi)
+        
+        roi_selection = QWidget()
+        roi_selection.setLayout(QHBoxLayout())
+        roi_selection.layout().addWidget(combobox_roi)
+        roi_selection.layout().addWidget(btn_analyze_roi)
+        
+        roi_frame.layout().addWidget(roi_selection)
+        
+        widget.layout().addWidget(roi_frame)
+        
+        scroll_area = QScrollArea()
+        scroll_area.setWidget(widget)
+        self.setMinimumSize(400,500) # TODO: find permanent values
+        scroll_area.setWidgetResizable(True)
+
+        self.setLayout(QVBoxLayout())
+        self.layout().addWidget(scroll_area)
 
     def _on_click(self):
-        print("napari has", len(self.viewer.layers), "layers")
+        print('napari has', len(self.viewer.layers), 'layers')
         
