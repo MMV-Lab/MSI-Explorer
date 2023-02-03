@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     import napari
     
 from ._selection import SelectionWindow
+from ._metadata import MetadataWindow
 
 # TODO: check tests
 class ExampleQWidget(QWidget):
@@ -15,32 +16,41 @@ class ExampleQWidget(QWidget):
         super().__init__()
         self.viewer = napari_viewer
 
+        ### QObjects
+        
+        # Labels
         label_preprocessing = QLabel('Preprocessing')
         label_scale = QLabel('Scale:')
-        label_correction = QLabel('Correction:')
+        label_correction = QLabel('Mass calibration:')
         label_correction_tooltip = 'recalibration/baseline correction'
         label_correction.setToolTip(label_correction_tooltip)
         label_noise_reduction = QLabel('noise reduction:')
         label_roi = QLabel('ROI')
 
+        # Buttons
         btn_load_imzml = QPushButton('Load imzML')
         btn_view_metadata = QPushButton('View Metadata')
         btn_execute_preprocessing = QPushButton('Execute')
         btn_analyze_roi = QPushButton('Analyze')
         btn_minimize_preprocessing = QPushButton('-')
         
+        btn_view_metadata.clicked.connect(self._open_metadata)
+        
+        # Comboboxes
         combobox_scale = QComboBox()
         combobox_scale.addItems(['original', 'normalized'])
         combobox_roi = QComboBox()
         
+        
+        # Lineedits
         lineedit_correction = QLineEdit()
         lineedit_noise_reduction = QLineEdit()
         
+        ### Variables
         preprocessing_minimized = False
-        
-        btn = QPushButton('Click me!')
-        btn.clicked.connect(self._on_click)
 
+        ### Organize objects via widgets
+        # widget: parent widget of all content
         widget = QWidget()
         widget.setLayout(QVBoxLayout())
         
@@ -110,6 +120,7 @@ class ExampleQWidget(QWidget):
         
         widget.layout().addWidget(roi_frame)
         
+        # Scrollarea allows content to be larger than assigned space (small monitor)
         scroll_area = QScrollArea()
         scroll_area.setWidget(widget)
         self.setMinimumSize(400,500) # TODO: find permanent values
@@ -118,9 +129,16 @@ class ExampleQWidget(QWidget):
         self.setLayout(QVBoxLayout())
         self.layout().addWidget(scroll_area)
         
+        ### Create & float selection widget
         self.selection_window = SelectionWindow()
         self.selection_window.show()
+        
+    def _open_metadata(self):
+        self.metadata_window = MetadataWindow()
+        self.metadata_window.show()
 
     def _on_click(self):
         print('napari has', len(self.viewer.layers), 'layers')
+        
+        
         
