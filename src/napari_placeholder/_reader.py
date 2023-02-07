@@ -1,4 +1,6 @@
 import numpy as np
+from pyimzml.ImzMLParser import ImzMLParser
+from _maldi_ms_data import MaldiMS
 
 
 def napari_get_reader(path):
@@ -22,7 +24,7 @@ def napari_get_reader(path):
         path = path[0]
 
     # if we know we cannot read the file, we immediately return None.
-    if not path.endswith(".npy"):
+    if not path.endswith(".imzML"):
         return None
 
     # otherwise we return the *function* that can read ``path``.
@@ -30,36 +32,30 @@ def napari_get_reader(path):
 
 
 def reader_function(path):
-    """Take a path or list of paths and return a list of LayerData tuples.
-
-    Readers are expected to return data as a list of tuples, where each tuple
-    is (data, [add_kwargs, [layer_type]]), "add_kwargs" and "layer_type" are
-    both optional.
+    """Take a path and return a MaldiMS object.
 
     Parameters
     ----------
-    path : str or list of str
-        Path to file, or list of paths.
+    path : string or Path object to an .imzML file (in XML format)
 
     Returns
     -------
-    layer_data : list of tuples
-        A list of LayerData tuples where each tuple in the list contains
-        (data, metadata, layer_type), where data is a numpy array, metadata is
-        a dict of keyword arguments for the corresponding viewer.add_* method
-        in napari, and layer_type is a lower-case string naming the type of
-        layer. Both "meta", and "layer_type" are optional. napari will
-        default to layer_type=="image" if not provided
+    MaldiMS object
     """
-    # handle both a string and a list of strings
-    paths = [path] if isinstance(path, str) else path
-    # load all files into array
-    arrays = [np.load(_path) for _path in paths]
-    # stack arrays into single array
-    data = np.squeeze(np.stack(arrays))
 
-    # optional kwargs for the corresponding viewer.add_* method
-    add_kwargs = {}
+    try:
+        p = ImzMLParser(path)
+    except BaseException as err:
+        print('Error:', err)
 
-    layer_type = "image"  # optional, default is "image"
-    return [(data, add_kwargs, layer_type)]
+    spectra = []
+    coordinates = []
+    for i, (x, y, z) in enumerate(p.coordinates):
+        mzs, intensities = p.getspectrum(i)
+        spectra += [[mzs, intensities]]     # list of lists
+        coordinates += [(x, y, z)]          # list of tuples
+
+    metadata = p.metadata.pretty()          # nested dictionary
+    maldi_ms = MaldiMS(spectra, coordinates, metadata)
+
+    return maldi_ms
