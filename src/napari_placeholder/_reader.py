@@ -1,6 +1,5 @@
-import numpy as np
 from pyimzml.ImzMLParser import ImzMLParser
-from _maldi_ms_data import MaldiMS
+from _maldi_ms_data import Maldi_MS
 
 
 def napari_get_reader(path):
@@ -31,31 +30,22 @@ def napari_get_reader(path):
     return reader_function
 
 
-def reader_function(path):
-    """Take a path and return a MaldiMS object.
+def reader_function(filename):
+    """Take a file name and return a Maldi_MS object.
 
     Parameters
     ----------
-    path : string or Path object to an .imzML file (in XML format)
+    filename : string or Path object to an .imzML file (in XML format)
 
     Returns
     -------
-    MaldiMS object
+    Maldi_MS object
     """
 
     try:
-        p = ImzMLParser(path)
+        p = ImzMLParser(filename)
+        # p = ImzMLParser(filename, include_spectra_metadata='full')
     except BaseException as err:
         print('Error:', err)
 
-    spectra = []
-    coordinates = []
-    for i, (x, y, z) in enumerate(p.coordinates):
-        mzs, intensities = p.getspectrum(i)
-        spectra += [[mzs, intensities]]     # list of lists
-        coordinates += [(x, y, z)]          # list of tuples
-
-    metadata = p.metadata.pretty()          # nested dictionary
-    maldi_ms = MaldiMS(spectra, coordinates, metadata)
-
-    return maldi_ms
+    return Maldi_MS(p)
