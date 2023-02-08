@@ -73,8 +73,6 @@ class MetadataWindow(QWidget):
     def _add_line(self):
         key = QLineEdit()
         value = QLineEdit()
-        key.editingFinished.connect(self._check_for_empty_line)
-        value.editingFinished.connect(self._check_for_empty_line)
         
         frame = QWidget()
         frame.is_empty = True
@@ -87,8 +85,10 @@ class MetadataWindow(QWidget):
         def mark_line_used():
             frame.is_empty = False
             
-        key.textEdited.connect(mark_line_used)
-        value.textEdited.connect(mark_line_used)
+        key.textChanged.connect(mark_line_used)
+        value.textChanged.connect(mark_line_used)
+        key.textChanged.connect(self._check_for_empty_line)
+        value.textChanged.connect(self._check_for_empty_line)
 
     # If last line is not empty add a new one
     def _check_for_empty_line(self):

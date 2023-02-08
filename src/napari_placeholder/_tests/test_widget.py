@@ -1,22 +1,33 @@
-import numpy as np
+#import numpy as np
 
 from napari_placeholder import ExampleQWidget
 
 
-# make_napari_viewer is a pytest fixture that returns a napari viewer object
-# capsys is a pytest fixture that captures stdout and stderr output streams
-def test_example_q_widget(make_napari_viewer, capsys):
-    # make viewer and add an image layer using our fixture
+def test_example_q_widget(make_napari_viewer):
+    ### Tests if main widget & selection window can be created
+    # make viewer
     viewer = make_napari_viewer()
-    viewer.add_image(np.random.random((100, 100)))
 
     # create our widget, passing in the viewer
+    try:
+        my_widget = ExampleQWidget(viewer)
+    except:
+        assert False
+    assert True
+
+def test_metadata(make_napari_viewer):
+    ### Tests if metadata window can be created
+    
+    viewer = make_napari_viewer()
+    
     my_widget = ExampleQWidget(viewer)
+    try:
+        my_widget._open_metadata()
+    except:
+        assert False
+    assert True
 
-    # call our widget method
-    my_widget._on_click()
-
-    # read captured output and check that it's as we expected
+    """# read captured output and check that it's as we expected
     captured = capsys.readouterr()
-    assert captured.out == "napari has 1 layers\n"
+    assert captured.out == "napari has 1 layers\n" """
 
