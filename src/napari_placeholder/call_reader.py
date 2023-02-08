@@ -7,8 +7,8 @@ filename = '220912_KWS_PB_NEG_NEDC_7mg_newslide_kidneytissue_1pt88.imzML'
 path1 = 'C:/Temp'
 path2 = Path(path1, filename)
 
-my_reader = napari_get_reader(path1)
-maldi_ms = my_reader(filename)
+my_reader = napari_get_reader(path2)
+maldi_ms = my_reader(path2)
 
 # maldi_ms = reader_function(path2)
 
