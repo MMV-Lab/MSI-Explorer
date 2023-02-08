@@ -5,6 +5,7 @@ from ._widget import ExampleQWidget
 from ._writer import write_multiple, write_single_image
 from ._selection import SelectionWindow
 from ._metadata import MetadataWindow
+from ._maldi_ms_data import Maldi_MS
 
 __all__ = (
     "napari_get_reader",
@@ -13,4 +14,5 @@ __all__ = (
     "ExampleQWidget",
     "SelectionWindow",
     "MetadataWindow",
+    "Maldi_MS",
 )
