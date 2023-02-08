@@ -1,13 +1,16 @@
 # Test der Funktion _reader()
 from _reader import reader_function
-from _maldi_ms_data import Maldi_MS
+from napari_placeholder import Maldi_MS, napari_get_reader
 from pathlib import Path
 
 filename = '220912_KWS_PB_NEG_NEDC_7mg_newslide_kidneytissue_1pt88.imzML'
 path1 = 'C:/Temp'
 path2 = Path(path1, filename)
 
-maldi_ms = reader_function(path2)
+my_reader = napari_get_reader(path1)
+maldi_ms = my_reader(filename)
+
+# maldi_ms = reader_function(path2)
 
 print('Number of spectra:', maldi_ms.get_num_spectra())
 print('Coordinates:', maldi_ms.get_coordinates(34567))
