@@ -1,5 +1,5 @@
 from pyimzml.ImzMLParser import ImzMLParser
-from _maldi_ms_data import Maldi_MS
+from napari_placeholder import Maldi_MS
 
 
 def napari_get_reader(path):
