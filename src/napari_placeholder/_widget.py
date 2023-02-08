@@ -136,9 +136,5 @@ class ExampleQWidget(QWidget):
     def _open_metadata(self):
         self.metadata_window = MetadataWindow()
         self.metadata_window.show()
-
-    def _on_click(self):
-        print('napari has', len(self.viewer.layers), 'layers')
-        
         
         
