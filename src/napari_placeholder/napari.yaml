@@ -17,7 +17,7 @@ contributions:
   readers:
     - command: napari-PLACEHOLDER.get_reader
       accepts_directories: false
-      filename_patterns: ['*.npy']
+      filename_patterns: ['*.imzML']
   writers:
     - command: napari-PLACEHOLDER.write_multiple
       layer_types: ['image*','labels*']
