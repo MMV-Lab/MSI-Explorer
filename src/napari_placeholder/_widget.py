@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     
 from ._selection import SelectionWindow
 from ._metadata import MetadataWindow
+from ._reader import open_dialog, napari_get_reader
 
 # TODO: check tests
 class ExampleQWidget(QWidget):
@@ -35,6 +36,7 @@ class ExampleQWidget(QWidget):
         btn_minimize_preprocessing = QPushButton('-')
         
         btn_view_metadata.clicked.connect(self._open_metadata)
+        btn_load_imzml.clicked.connect(self._open_file)
         
         # Comboboxes
         combobox_scale = QComboBox()
@@ -137,4 +139,11 @@ class ExampleQWidget(QWidget):
         self.metadata_window = MetadataWindow()
         self.metadata_window.show()
         
+    def _open_file(self):
+        filepath = open_dialog(self, '*.imzML')
+        file_reader = napari_get_reader(filepath)
+        self.ms_object = file_reader(filepath)
+        self.selection_window.update_plot(self.selection_window.plot(self.ms_object.get_spectrum(0)))
+
+
         
