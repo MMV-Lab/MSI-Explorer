@@ -9,23 +9,6 @@ class SelectionWindow(QWidget):
         super().__init__()
         self.setLayout(QVBoxLayout())
         
-        """fig = Figure(figsize=(6,6))
-        #fig.patch.set_facecolor("#262930")
-        self.axes = fig.add_subplot(111)
-        #axes.set_facecolor("#262930")
-        axes.spines["bottom"].set_color("white")
-        axes.spines["top"].set_color("white")
-        axes.spines["right"].set_color("white")
-        axes.spines["left"].set_color("white")
-        axes.xaxis.label.set_color("white")
-        axes.yaxis.label.set_color("white")
-        self.axes.tick_params(axis="x")
-        self.axes.tick_params(axis="y")
-        axes.tick_params(axis="x", colors="white")
-        axes.tick_params(axis="y", colors="white")
-        
-        canvas = FigureCanvas(fig)"""
-        
         self.canvas = self.plot()
         ### QObjects
         
@@ -115,9 +98,7 @@ class SelectionWindow(QWidget):
     def update_plot(self, new_canvas):
         old_canvas = self.canvas
         self.layout().itemAt(0).widget().layout().removeWidget(old_canvas)
-        self.layout().itemAt(0).widget().layout().itemAt(0).widget()
         old_canvas.hide()
         self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
         self.canvas = new_canvas
-        pass
         
