@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 from ._selection import SelectionWindow
 from ._metadata import MetadataWindow
 from ._reader import open_dialog, napari_get_reader
+from ._analysis import AnalysisWindow
 
 # TODO: check tests
 class ExampleQWidget(QWidget):
@@ -37,6 +38,7 @@ class ExampleQWidget(QWidget):
         
         btn_view_metadata.clicked.connect(self._open_metadata)
         btn_load_imzml.clicked.connect(self._open_file)
+        btn_analyze_roi.clicked.connect(self._analyze)
         
         # Comboboxes
         combobox_scale = QComboBox()
@@ -145,5 +147,7 @@ class ExampleQWidget(QWidget):
         self.ms_object = file_reader(filepath)
         self.selection_window.update_plot(self.selection_window.plot(self.ms_object.get_spectrum(0)))
 
-
+    def _analyze(self):
+        self.analysis_window = AnalysisWindow()
+        self.analysis_window.show()
         
