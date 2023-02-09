@@ -1,6 +1,11 @@
 from pyimzml.ImzMLParser import ImzMLParser
 from napari_placeholder import Maldi_MS
+from qtpy.QtWidgets import QFileDialog
 
+def open_dialog(parent, filetype):
+    dialog = QFileDialog()
+    filepath = dialog.getOpenFileName(parent, "Select imzML file",filter = filetype)[0]
+    return filepath
 
 def napari_get_reader(path):
     """A basic implementation of a Reader contribution.
