@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+from pyimzml.ImzMLParser import getionimage
 
 class Maldi_MS():
     def __init__(self, p):
@@ -44,6 +45,9 @@ class Maldi_MS():
 
     def get_num_spectra(self):
         return self._num_spectra
+
+    def get_ion_image(self, mz, tol=0.1):
+        return getionimage(self._parser, mz, tol)
 
     def plot_spectrum(self, i):
         i = self.check_i(i)
