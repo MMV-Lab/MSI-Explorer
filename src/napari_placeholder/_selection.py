@@ -4,12 +4,15 @@ from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+from ._database import DatabaseWindow
+
 class SelectionWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setLayout(QVBoxLayout())
-        
+
         self.canvas = self.plot()
+        self.mzs = []
         ### QObjects
         
         # Labels
@@ -23,6 +26,8 @@ class SelectionWindow(QWidget):
         btn_reset_view = QPushButton("Reset")
         btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
+        
+        btn_select_database.clicked.connect(self.select_database)
         
         # Radiobuttons
         radio_btn_replace_layer = QRadioButton("Single panel_view")
@@ -101,4 +106,8 @@ class SelectionWindow(QWidget):
         old_canvas.hide()
         self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
         self.canvas = new_canvas
+        
+    def select_database(self):
+        self.database_window = DatabaseWindow(self)
+        self.database_window.show()
         
