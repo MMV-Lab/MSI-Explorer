@@ -5,12 +5,15 @@ contributions:
     - id: napari-PLACEHOLDER.get_reader
       python_name: napari_placeholder._reader:napari_get_reader
       title: Open data with PLACEHOLDER
-    - id: napari-PLACEHOLDER.write_multiple
-      python_name: napari_placeholder._writer:write_multiple
-      title: Save multi-layer data with PLACEHOLDER
-    - id: napari-PLACEHOLDER.write_single_image
-      python_name: napari_placeholder._writer:write_single_image
-      title: Save image data with PLACEHOLDER
+    - id: napari-PLACEHOLDER.write_metadata
+      python_name: napari_placeholder.writer:write_metadata
+      title: Save metadata to csv file
+#    - id: napari-PLACEHOLDER.write_multiple
+#      python_name: napari_placeholder._writer:write_multiple
+#      title: Save multi-layer data with PLACEHOLDER
+#    - id: napari-PLACEHOLDER.write_single_image
+#      python_name: napari_placeholder._writer:write_single_image
+#      title: Save image data with PLACEHOLDER
     - id: napari-PLACEHOLDER.make_qwidget
       python_name: napari_placeholder._widget:ExampleQWidget
       title: Make example QWidget
@@ -19,12 +22,15 @@ contributions:
       accepts_directories: false
       filename_patterns: ['*.imzML']
   writers:
-    - command: napari-PLACEHOLDER.write_multiple
-      layer_types: ['image*','labels*']
-      filename_extensions: []
-    - command: napari-PLACEHOLDER.write_single_image
-      layer_types: ['image']
-      filename_extensions: ['.npy']
+    - command: napari-PLACEHOLDER.write_metadata
+      layer_types : [None]
+      filename_extensions: ['.csv']
+#    - command: napari-PLACEHOLDER.write_multiple
+#      layer_types: ['image*','labels*']
+#      filename_extensions: []
+#    - command: napari-PLACEHOLDER.write_single_image
+#      layer_types: ['image']
+#      filename_extensions: ['.npy']
   widgets:
     - command: napari-PLACEHOLDER.make_qwidget
       display_name: Example QWidget
