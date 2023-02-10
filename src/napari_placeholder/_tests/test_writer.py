@@ -6,9 +6,9 @@ from napari_placeholder import metadata_writer
 
 # tmp_path is a pytest fixture
 def test_metadata_writer(tmp_path):
-    """"Tests if we can write a csv file"""
+    """Tests if we can write a csv file"""
     
-    # createsome fake data & filepath
+    # create some fake data & filepath
     data = np.random(5)
     testfile = str(tmp_path / "myfile.csv")
     
