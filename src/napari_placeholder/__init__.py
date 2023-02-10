@@ -1,6 +1,7 @@
 __version__ = "0.0.1"
 
 from ._maldi_ms_data import Maldi_MS
+from ._analysis import AnalysisWindow
 from ._reader import napari_get_reader
 from ._widget import ExampleQWidget
 from ._writer import write_metadata #write_multiple, write_single_image
@@ -9,6 +10,7 @@ from ._metadata import MetadataWindow
 
 __all__ = (
     "Maldi_MS",
+    "AnalysisWindow",
     "napari_get_reader",
     "write_metadata",
     #"write_single_image",
