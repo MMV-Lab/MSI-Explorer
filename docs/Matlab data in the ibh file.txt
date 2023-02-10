@@ -1,0 +1,48 @@
+>> scanMotif
+
+scanMotif = 
+
+  struct with fields:
+
+             uuid: '0aa71e8a1ba861427a8d64f16f7eaddc'
+         filename: 'W:\SpatMet\MALDI\Standards\Negative\220912\220912_KWS_PB_NEG_NEDC_7mg_newslide_kidneytissue_1pt88.imzML'
+          version: 'MSiReader  v1.02  [Matlab R2017a 64-bit standalone]'
+        ibdformat: {'double'  'double'}
+         mzformat: 'processed'
+         scanmode: 'flyback'
+             is2D: 1
+             is3D: 0
+             isIM: 0
+          autodim: 0
+            IMcol: 0
+            IMrow: 0
+             ncol: 213
+             nrow: 260
+           nlayer: 1
+         nspectra: 1
+        numpixels: 55380
+         numscans: 46242
+         xspacing: 30
+         yspacing: 30
+         zspacing: 0
+         tspacing: 0
+         scansacq: []
+            rankT: []
+        driftruns: []
+         driftseq: []
+       driftdelta: 0
+            index: [46242×1 double]
+             posX: [46242×1 double]
+             posY: [46242×1 double]
+             posZ: [46242×1 double]
+             posT: [46242×1 double]
+         numpeaks: [46242×1 double]
+            frame: [46242×1 double]
+        starttime: [46242×1 double]
+    injectiontime: [46242×1 double]
+        drifttime: [46242×1 double]
+              tic: [46242×1 double]
+         polarity: [46242×1 double]
+         spectrum: [46242×1 double]
+          ibdptrs: [46242×2 double]
+              loc: [260×213 double]
