@@ -1,4 +1,5 @@
 from __future__ import annotations
+from qtpy.QtWidgets import QFileDialog
 
 #from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
 import csv
@@ -7,11 +8,19 @@ import csv
     DataType = Union[Any, Sequence[Any]]
     FullLayerData = Tuple[DataType, dict, str]"""
 
+def save_dialog(parent, filetype):
+    dialog = QFileDialog()
+    filepath = dialog.getSaveFileName(parent,filter = filetype)
+    return filepath
 
 def write_metadata(path, data):
     file = open(path, 'w', newline = '')
     writer = csv.writer(file)
-    pass
+    for line in data:
+        writer.writerow(line)
+    #writer.writerows(data)
+    file.close()
+    
 
 """def write_single_image(path: str, data: Any, meta: dict) -> List[str]:
     ""Writes a single image layer""
