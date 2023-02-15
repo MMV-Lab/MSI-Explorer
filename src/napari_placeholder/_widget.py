@@ -103,6 +103,8 @@ class ExampleQWidget(QWidget):
         
         preprocessing_frame.layout().addWidget(preprocessing_noise_reduction)
         
+        preprocessing_frame.layout().addWidget(btn_execute_preprocessing)
+        
         widget.layout().addWidget(preprocessing_frame)
         
         roi_frame = QFrame()
@@ -134,7 +136,7 @@ class ExampleQWidget(QWidget):
         self.layout().addWidget(scroll_area)
         
         ### Create & float selection widget
-        self.selection_window = SelectionWindow()
+        self.selection_window = SelectionWindow(self.viewer)
         self.selection_window.show()
         
     def _open_metadata(self):
@@ -145,9 +147,13 @@ class ExampleQWidget(QWidget):
         filepath = open_dialog(self, '*.imzML')
         file_reader = napari_get_reader(filepath)
         self.ms_object = file_reader(filepath)
-        self.selection_window.update_plot(self.selection_window.plot(self.ms_object.get_spectrum(0)))
+        self.selection_window.set_ms_data(self.ms_object)
+        self.selection_window.update_plot(self.selection_window.plot(self.ms_object.get_spectrum(34567)))
+        self.selection_window.calculate_image(float(self.selection_window.combobox_mz.currentText()))
 
     def _analyze(self):
         self.analysis_window = AnalysisWindow()
         self.analysis_window.show()
+        
+        
         
