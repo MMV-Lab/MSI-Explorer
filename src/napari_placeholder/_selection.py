@@ -5,10 +5,12 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from ._database import DatabaseWindow
+from ._maldi_ms_data import Maldi_MS
 
 class SelectionWindow(QWidget):
-    def __init__(self):
+    def __init__(self, viewer):
         super().__init__()
+        self.viewer = viewer
         self.setLayout(QVBoxLayout())
 
         self.canvas = self.plot()
@@ -30,15 +32,18 @@ class SelectionWindow(QWidget):
         btn_select_database.clicked.connect(self.select_database)
         
         # Radiobuttons
-        radio_btn_replace_layer = QRadioButton("Single panel_view")
+        self.radio_btn_replace_layer = QRadioButton("Single panel_view")
         radio_btn_add_layer = QRadioButton("Multi")
-        radio_btn_replace_layer.toggle()
+        self.radio_btn_replace_layer.toggle()
         
         # Lineedits
-        lineedit_mz_range = QLineEdit()
+        self.lineedit_mz_range = QLineEdit("0.1")
         
         # Comboboxes
-        combobox_mz = QComboBox()
+        self.combobox_mz = QComboBox()
+        self.combobox_mz.addItems(["78.959", "124.001", "500.277"])
+        
+        self.combobox_mz.currentTextChanged.connect(self.calculate_image)
         
         ### Organize objects via widgets
         visual_frame = QWidget()
@@ -64,17 +69,17 @@ class SelectionWindow(QWidget):
         mz_frame = QWidget()
         mz_frame.setLayout(QHBoxLayout())
         mz_frame.layout().addWidget(label_mz)
-        mz_frame.layout().addWidget(combobox_mz)
+        mz_frame.layout().addWidget(self.combobox_mz)
         mz_frame.layout().addWidget(label_mz_annotation)
         mz_frame.layout().addWidget(label_range)
-        mz_frame.layout().addWidget(lineedit_mz_range)
+        mz_frame.layout().addWidget(self.lineedit_mz_range)
         
         self.layout().addWidget(mz_frame)
         
         display_mode_frame = QWidget()
         display_mode_frame.setLayout(QHBoxLayout())
         display_mode_frame.layout().addWidget(label_mode)
-        display_mode_frame.layout().addWidget(radio_btn_replace_layer)
+        display_mode_frame.layout().addWidget(self.radio_btn_replace_layer)
         display_mode_frame.layout().addWidget(radio_btn_add_layer)
         
         self.layout().addWidget(display_mode_frame)
@@ -92,6 +97,8 @@ class SelectionWindow(QWidget):
         axes.yaxis.label.set_color("white")"""
         axes.tick_params(axis="x")
         axes.tick_params(axis="y")
+        axes.set_xlabel("m/z")
+        axes.set_ylabel("intensity")
         """axes.tick_params(axis="x", colors="white")
         axes.tick_params(axis="y", colors="white")"""
         if data is None:
@@ -110,4 +117,25 @@ class SelectionWindow(QWidget):
     def select_database(self):
         self.database_window = DatabaseWindow(self)
         self.database_window.show()
+        
+    def calculate_image(self, mz):
+        mz = float(mz)
+        tolerance = float(self.lineedit_mz_range.text())
+        image = self.ms_object.get_ion_image(mz, tolerance)
+        if self.radio_btn_replace_layer.isChecked():
+            try:
+                self.viewer.layers.remove("main view")
+            except ValueError:
+                pass
+            self.viewer.add_image(image, name = "main view", colormap = "inferno")
+        else:
+            layername = "m/z " + str(round(mz - tolerance,3)) + " - " + str(mz + tolerance)
+            self.viewer.add_image(image, name = layername, colormap = "inferno")
+    
+    def set_ms_data(self, ms_data):
+        self.ms_object = ms_data
+        
+        
+        
+        
         
