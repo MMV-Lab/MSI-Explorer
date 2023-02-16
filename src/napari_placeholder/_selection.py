@@ -15,6 +15,7 @@ class SelectionWindow(QWidget):
 
         self.canvas = self.plot()
         self.mzs = []
+        
         ### QObjects
         
         # Labels
@@ -41,7 +42,6 @@ class SelectionWindow(QWidget):
         
         # Comboboxes
         self.combobox_mz = QComboBox()
-        #self.combobox_mz.addItems(["78.959", "124.001", "500.277"])
         
         self.combobox_mz.currentTextChanged.connect(self.calculate_image)
         self.combobox_mz.currentTextChanged.connect(self.display_description)
@@ -148,16 +148,13 @@ class SelectionWindow(QWidget):
             self.combobox_mz.addItem(self.mzs[i])
             
     def display_description(self, mz):
-        if mz == '':
-            pass
-        mz_index = self.mzs.index(mz)
+        try:
+            mz_index = self.mzs.index(mz)
+        except ValueError:
+            return
         name_index = mz_index + 1
         name = self.mzs[name_index]
         self.label_mz_annotation.setText(name)
-        """annotation = QLabel(name)
-        self.layout().replaceWidget(self.label_mz_annotation, annotation)"""
-        #self.label_mz_annotation.hide()
-        #self.label_mz_annotation = annotation
         
         
         
