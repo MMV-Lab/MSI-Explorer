@@ -1,4 +1,5 @@
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QFrame, QLabel, QLineEdit, QHBoxLayout, QPushButton
+from ._writer import write_metadata, save_dialog
 
 class MetadataWindow(QWidget):
     def __init__(self):
@@ -67,7 +68,22 @@ class MetadataWindow(QWidget):
         self._add_line()
         
     def _export(self):
-        pass
+        metadata = self._compile_metadata()
+        filepath = save_dialog(self, '*.csv')[0]
+        try:
+            write_metadata(filepath,metadata)
+        except FileNotFoundError:
+            return
+    
+    def _compile_metadata(self):
+        metadata = []
+        parent_layout = self.layout().itemAt(0).widget().layout()
+        for i in range(0, parent_layout.count() - 1):
+            line = parent_layout.itemAt(i).widget().layout()
+            key = line.itemAt(0).widget().text()
+            value = line.itemAt(1).widget().text()
+            metadata.append((key,value))
+        return metadata
     
     # Adds two lineedits for user to input key/value pair
     def _add_line(self):
