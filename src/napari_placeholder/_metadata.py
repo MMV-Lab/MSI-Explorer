@@ -70,7 +70,10 @@ class MetadataWindow(QWidget):
     def _export(self):
         metadata = self._compile_metadata()
         filepath = save_dialog(self, '*.csv')[0]
-        write_metadata(filepath,metadata)
+        try:
+            write_metadata(filepath,metadata)
+        except FileNotFoundError:
+            return
     
     def _compile_metadata(self):
         metadata = []
@@ -80,7 +83,6 @@ class MetadataWindow(QWidget):
             key = line.itemAt(0).widget().text()
             value = line.itemAt(1).widget().text()
             metadata.append((key,value))
-        print('metadata:',metadata)
         return metadata
     
     # Adds two lineedits for user to input key/value pair

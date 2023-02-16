@@ -146,10 +146,18 @@ class ExampleQWidget(QWidget):
     def _open_file(self):
         filepath = open_dialog(self, '*.imzML')
         file_reader = napari_get_reader(filepath)
-        self.ms_object = file_reader(filepath)
+        try:
+            self.ms_object = file_reader(filepath)
+        except TypeError:
+            return
         self.selection_window.set_ms_data(self.ms_object)
         self.selection_window.update_plot(self.selection_window.plot(self.ms_object.get_spectrum(34567)))
-        self.selection_window.calculate_image(float(self.selection_window.combobox_mz.currentText()))
+        try:
+            self.selection_window.calculate_image(float(self.selection_window.combobox_mz.currentText()))
+        except ValueError:
+            pass
+        else:
+            self.selection_window.display_description(float(self.selection_window.combobox_mz.currentText()))
 
     def _analyze(self):
         self.analysis_window = AnalysisWindow()
