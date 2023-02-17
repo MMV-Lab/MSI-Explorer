@@ -1,5 +1,5 @@
 from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton,
-                            QComboBox, QLineEdit, QAction)
+                            QComboBox, QLineEdit)
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
