@@ -89,11 +89,11 @@ class SelectionWindow(QWidget):
         
         @self.viewer.bind_key('s')
         def read_cursor_position(viewer):
-            print(int(viewer.cursor.position[0]),int(viewer.cursor.position[1]))
+            print(round(viewer.cursor.position[0]),round(viewer.cursor.position[1]))
         
     def keyPressEvent(self, event):
         if event.text() == 's':
-            print(int(self.viewer.cursor.position[0]),int(self.viewer.cursor.position[1]))
+            print(round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1]))
         
     def plot(self, data = None):
         fig = Figure(figsize=(6,6))
