@@ -62,3 +62,13 @@ class Maldi_MS():
 
     # def print_sf_metadata(self):
         # print(self._spectrum_full_metadata[0].pretty())
+
+    def get_tic(self):
+        # calculate the total ion current for all spectra
+        n = self._num_spectra
+        tic = np.zeros(n)
+
+        for i, spec in enumerate(self._spectra):
+            tic[i] = spec[1].sum()
+
+        return tic
