@@ -1,8 +1,9 @@
 from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton,
-                            QComboBox, QLineEdit)
+                            QComboBox, QLineEdit, QAction)
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import numpy as np
 
 from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
@@ -13,7 +14,7 @@ class SelectionWindow(QWidget):
         self.viewer = viewer
         self.setLayout(QVBoxLayout())
 
-        self.canvas = self.plot()
+        self.plot()
         self.mzs = []
         
         ### QObjects
@@ -30,6 +31,7 @@ class SelectionWindow(QWidget):
         btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
         
+        btn_reset_view.clicked.connect(self.reset_plot)
         btn_select_database.clicked.connect(self.select_database)
         
         # Radiobuttons
@@ -85,6 +87,14 @@ class SelectionWindow(QWidget):
         
         self.layout().addWidget(display_mode_frame)
         
+        @self.viewer.bind_key('s')
+        def read_cursor_position(viewer):
+            print(int(viewer.cursor.position[0]),int(viewer.cursor.position[1]))
+        
+    def keyPressEvent(self, event):
+        if event.text() == 's':
+            print(int(self.viewer.cursor.position[0]),int(self.viewer.cursor.position[1]))
+        
     def plot(self, data = None):
         fig = Figure(figsize=(6,6))
         #fig.patch.set_facecolor("#262930")
@@ -102,18 +112,39 @@ class SelectionWindow(QWidget):
         axes.set_ylabel("intensity")
         """axes.tick_params(axis="x", colors="white")
         axes.tick_params(axis="y", colors="white")"""
+        
+        
         if data is None:
             axes.plot()
         else:
             axes.plot(data[0],data[1])
-        return FigureCanvas(fig)
+            
+        canvas = FigureCanvas(fig)
+            
+        def onselect(min, max):
+            if not hasattr(self, 'data_array'):
+                return
+                
+            """if self.data_array.shape == ():
+                return"""
+            min_bound = self.data_array[:,self.data_array[0,:] >= min]
+            both_bound = min_bound[:,min_bound[0,:] <= max]
+            self.update_plot(both_bound)
     
-    def update_plot(self, new_canvas):
+        from matplotlib.widgets import SpanSelector
+        self.selector = SpanSelector(axes, onselect = onselect, direction = "horizontal")
+        self.canvas = canvas
+        return canvas
+    
+    def update_plot(self, data):
         old_canvas = self.canvas
+        new_canvas = self.plot(data)
         self.layout().itemAt(0).widget().layout().removeWidget(old_canvas)
         old_canvas.hide()
         self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
-        self.canvas = new_canvas
+        
+    def reset_plot(self):
+        self.update_plot(self.data_array)
         
     def select_database(self):
         self.database_window = DatabaseWindow(self)
@@ -138,8 +169,9 @@ class SelectionWindow(QWidget):
             layername = "m/z " + str(round(mz - tolerance,3)) + " - " + str(mz + tolerance)
             self.viewer.add_image(image, name = layername, colormap = "inferno")
     
-    def set_ms_data(self, ms_data):
+    def set_data(self, ms_data, data):
         self.ms_object = ms_data
+        self.data_array = np.array(data)
         
     def update_mzs(self):
         for i in range(0,self.combobox_mz.count()):
@@ -156,7 +188,8 @@ class SelectionWindow(QWidget):
         name = self.mzs[name_index]
         self.label_mz_annotation.setText(name)
         
-        
+    
+
         
         
         
