@@ -36,6 +36,14 @@ class Maldi_MS():
         i = self.check_i(i)
         return self._spectra[i]
 
+    def get_index(self, y, x):
+        try:
+            i = self._coordinates.index((x, y, 1))
+            return i
+        except BaseException as err:
+            print('Error:', err)
+            return -1
+
     def get_coordinates(self, i):
         i = self.check_i(i)
         return self._coordinates[i]
@@ -55,6 +63,10 @@ class Maldi_MS():
         mzs = spec[0]
         intensities = spec[1]
         plt.plot(mzs, intensities)
+        plt.xlabel('m/z')
+        plt.ylabel('intensity')
+        title1 = 'Spectrum # %d' % (i)
+        plt.title(title1)
         plt.show()
 
     def print_metadata(self):
@@ -72,3 +84,43 @@ class Maldi_MS():
             tic[i] = spec[1].sum()
 
         return tic
+
+    def merge_two_spectra(self, spectrum1, spectrum2):
+        # build a new spectrum from spectrum 1 and 2
+        x1 = spectrum1[0]       # m/z values of the 1st spectrum
+        y1 = spectrum1[1]       # intensities of the 1st spectrum
+        x2 = spectrum2[0]
+        y2 = spectrum2[1]
+        x3 = np.array([])
+        y3 = np.array([])
+        n = len(x1)             # number of data points of the 1st spectrum
+        m = len(x2)
+        i, j = 0, 0
+
+        while True:                     # infinite loop
+            if x1[i] < x2[j]:           # start with the 1st spectrum
+                x3 = np.append(x3, x1[i])
+                y3 = np.append(y3, y1[i])
+                i += 1
+            elif x1[i] > x2[j]:         # start with the 2nd spectrum
+                x3 = np.append(x3, x2[j])
+                y3 = np.append(y3, y2[j])
+                j += 1
+            else:                       # add the intensities of both spectra
+                x3 = np.append(x3, x1[i])
+                y3 = np.append(y3, y1[i] + y2[j])
+                i += 1
+                j += 1
+
+            if (i == n) and (j == m):           # ready
+                break
+            elif i == n:                        # end of the 1st spectrum
+                x3 = np.append(x3, x2[j:m])     # the rest of the 2nd spec.
+                y3 = np.append(y3, y2[j:m])
+                break
+            elif j == m:                        # end of the 2nd spectrum
+                x3 = np.append(x3, x1[i:n])     # the rest of the 1st spec.
+                y3 = np.append(y3, y1[i:n])
+                break
+
+        return [x3, y3]
