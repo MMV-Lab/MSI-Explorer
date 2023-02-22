@@ -67,12 +67,16 @@ class DatabaseWindow(QWidget):
         for file in os.listdir(self.db_directory):
             checkbox = QCheckBox(os.path.splitext(file)[0])
             new_data_frame.layout().addWidget(checkbox)
-        #TODO: replace self.data_frame with new_dataframe, hide old widget
+            
+        new_data_frame.layout().addWidget(self.buttons_widget)
+        self.layout().replaceWidget(self.data_frame, new_data_frame)
+        self.data_frame.hide()
+        self.data_frame = new_data_frame
         
         
     def _add_database(self):
         create_new_database(self.db_directory)
-        
+        self._read_database_files()
     
     def _delete_database(self):
         pass

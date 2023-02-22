@@ -26,7 +26,9 @@ def create_new_database(path):
     writer = csv.writer(file)
     writer.writerow(["M/Z value", "Name", "Description"])
     file.close()
-    msg = QMessageBox("New Database created","New csv file has been created")
+    msg = QMessageBox()
+    msg.setWindowTitle("New Database created")
+    msg.setText("New csv file has been created")
     msg.exec()
     
 
