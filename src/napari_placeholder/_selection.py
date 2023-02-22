@@ -187,6 +187,9 @@ class SelectionWindow(QWidget):
         name_index = mz_index + 1
         name = self.mzs[name_index]
         self.label_mz_annotation.setText(name)
+        description_index = name_index + 1
+        description = self.mzs[description_index]
+        self.label_mz_annotation.setToolTip(description)
         
     
 

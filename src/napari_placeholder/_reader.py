@@ -3,12 +3,28 @@ from napari_placeholder import Maldi_MS
 from qtpy.QtWidgets import QFileDialog
 
 def open_dialog(parent, filetype):
+    """
+    Opens a dialog to select a file to open
+    
+    Parameters
+    ----------
+    parent : QWidget
+        Parent widget for the dialog
+    filetype : str
+        Only files of this filetype will be displayed
+        
+    Returns
+    -------
+    str
+        Path of the selected file
+    """
     dialog = QFileDialog()
     filepath = dialog.getOpenFileName(parent, "Select imzML file",filter = filetype)[0]
     return filepath
 
 def napari_get_reader(path):
-    """A basic implementation of a Reader contribution.
+    """
+    Determines reader type for file(s) at [path]
 
     Parameters
     ----------
@@ -36,15 +52,17 @@ def napari_get_reader(path):
 
 
 def reader_function(filename):
-    """Take a file name and return a Maldi_MS object.
+    """
+    Take a file name and return a Maldi_MS object.
 
     Parameters
     ----------
-    filename : string or Path object to an .imzML file (in XML format)
+    filename : str
+        Path to an .imzML file (in XML format)
 
     Returns
     -------
-    Maldi_MS object
+        Maldi_MS object
     """
 
     try:

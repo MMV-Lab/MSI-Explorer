@@ -1,6 +1,15 @@
 from qtpy.QtWidgets import QWidget, QPushButton, QGridLayout, QMessageBox
 
 class AnalysisWindow(QWidget):
+    """
+    A (QWidget) Window to run analysis on selected data
+    
+    
+    Methods
+    -------
+    function()
+        Temporary placeholder function
+    """
     def __init__(self):
         super().__init__()
         self.setLayout(QGridLayout())
@@ -29,6 +38,9 @@ class AnalysisWindow(QWidget):
         self.layout().addWidget(btn_function_5,2,0)
         
     def _function(self):
+        """
+        Temporary placeholder function
+        """
         msg = QMessageBox()
         msg.setWindowTitle("Hooray!")
         msg.setText("A function")
