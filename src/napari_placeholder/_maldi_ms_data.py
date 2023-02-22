@@ -40,8 +40,7 @@ class Maldi_MS():
         try:
             i = self._coordinates.index((x, y, 1))
             return i
-        except BaseException as err:
-            print('Error:', err)
+        except BaseException:
             return -1
 
     def get_coordinates(self, i):

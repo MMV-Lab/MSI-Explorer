@@ -89,12 +89,25 @@ class SelectionWindow(QWidget):
         
         @self.viewer.bind_key('s')
         def read_cursor_position(viewer):
-            print(round(viewer.cursor.position[0]),round(viewer.cursor.position[1]))
+            index = self.ms_object.get_index(
+                round(viewer.cursor.position[0]),round(viewer.cursor.position[1]))
+            #print(index)
+            if index == -1:
+                return
+            data = self.ms_object.get_spectrum(index)
+            self.update_plot(data)
         
     def keyPressEvent(self, event):
         if event.text() == 's':
-            print(round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1]))
+            index = self.ms_object.get_index(
+                round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1]))
+            #print(index)
+            if index == -1:
+                return
+            data = self.ms_object.get_spectrum(index)
+            self.update_plot(data)
         
+    # creates plot from passed data
     def plot(self, data = None):
         fig = Figure(figsize=(6,6))
         #fig.patch.set_facecolor("#262930")
@@ -143,9 +156,11 @@ class SelectionWindow(QWidget):
         old_canvas.hide()
         self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
         
+    # fully zooms out plot
     def reset_plot(self):
         self.update_plot(self.data_array)
         
+    # opens database selection window
     def select_database(self):
         self.database_window = DatabaseWindow(self)
         self.database_window.show()
@@ -169,6 +184,7 @@ class SelectionWindow(QWidget):
             layername = "m/z " + str(round(mz - tolerance,3)) + " - " + str(mz + tolerance)
             self.viewer.add_image(image, name = layername, colormap = "inferno")
     
+    # Sets MAldiMsData object
     def set_data(self, ms_data, data):
         self.ms_object = ms_data
         self.data_array = np.array(data)
