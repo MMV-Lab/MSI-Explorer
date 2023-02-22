@@ -1,5 +1,7 @@
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QPushButton
-import csv
+import csv, os
+
+from ._writer import create_new_database
 
 class DatabaseWindow(QWidget):
     def __init__(self, parent):
@@ -7,17 +9,16 @@ class DatabaseWindow(QWidget):
         self.setLayout(QVBoxLayout())
         
         self.parent = parent
+        self.db_directory = "src/napari_placeholder/databases/"
         
         ### QObjects
         # Label
-        label_database = QLabel("database")
+        self.label_database = QLabel("database")
         
         # Checkboxes
-        checkbox_database_1 = QCheckBox("test")
-        checkbox_database_2 = QCheckBox("database 2")
-        checkbox_database_3 = QCheckBox("database 3")
-        
-        checkbox_database_1.setChecked(True)
+        checkboxes = []
+        for file in os.listdir(self.db_directory):
+            checkboxes.append(QCheckBox(os.path.splitext(file)[0]))
         
         # Buttons
         btn_add_database = QPushButton("Add")
@@ -29,19 +30,18 @@ class DatabaseWindow(QWidget):
         btn_confirm.clicked.connect(self._return_values)
         
         ### Organize objects via widgets
-        data_frame = QFrame()
-        data_frame.setLayout(QVBoxLayout())
+        self.data_frame = QFrame()
+        self.data_frame.setLayout(QVBoxLayout())
         
-        data_frame.setStyleSheet("border-width: 1;"
+        self.data_frame.setStyleSheet("border-width: 1;"
                                    "border-radius: 3;"
                                    "border-style: solid;"
                                    "border-color: rgb(10, 10, 10);"
                                    )
         
-        data_frame.layout().addWidget(label_database)        
-        data_frame.layout().addWidget(checkbox_database_1)
-        data_frame.layout().addWidget(checkbox_database_2)
-        data_frame.layout().addWidget(checkbox_database_3)
+        self.data_frame.layout().addWidget(self.label_database)
+        for checkbox in checkboxes:
+            self.data_frame.layout().addWidget(checkbox)
         
         self.buttons_widget = QWidget()
         self.buttons_widget.setLayout(QHBoxLayout())
@@ -49,12 +49,30 @@ class DatabaseWindow(QWidget):
         self.buttons_widget.layout().addWidget(btn_delete_database)
         self.buttons_widget.layout().addWidget(btn_confirm)
         
-        data_frame.layout().addWidget(self.buttons_widget)
+        self.data_frame.layout().addWidget(self.buttons_widget)
         
-        self.layout().addWidget(data_frame)
+        self.layout().addWidget(self.data_frame)
+        
+    def _read_database_files(self):
+        data_frame = self.data_frame
+        new_data_frame = QFrame()
+        new_data_frame.setLayout(QVBoxLayout())
+        new_data_frame.setStyleSheet("border-width: 1;"
+                                   "border-radius: 3;"
+                                   "border-style: solid;"
+                                   "border-color: rgb(10, 10, 10);"
+                                   )
+        new_data_frame.layout().addWidget(self.label_database)
+        
+        for file in os.listdir(self.db_directory):
+            checkbox = QCheckBox(os.path.splitext(file)[0])
+            new_data_frame.layout().addWidget(checkbox)
+        #TODO: replace self.data_frame with new_dataframe, hide old widget
+        
         
     def _add_database(self):
-        pass
+        create_new_database(self.db_directory)
+        
     
     def _delete_database(self):
         pass
@@ -64,7 +82,7 @@ class DatabaseWindow(QWidget):
         data = self.layout().itemAt(0).widget().layout()
         for i in range(1, data.indexOf(self.buttons_widget)):
             if data.itemAt(i).widget().isChecked():
-                with open("src/napari_placeholder/databases/"+data.itemAt(i).widget().text() + ".csv", newline='') as csvfile:
+                with open(self.db_directory+data.itemAt(i).widget().text() + ".csv", newline='') as csvfile:
                     database_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
                     for row in database_reader:
                         mzs.append(row[0])

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from qtpy.QtWidgets import QFileDialog
+from qtpy.QtWidgets import QFileDialog, QMessageBox
 
 #from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
 import csv
@@ -20,6 +20,14 @@ def write_metadata(path, data):
         writer.writerow(line)
     #writer.writerows(data)
     file.close()
+    
+def create_new_database(path):
+    file = open(path + "NewDatabase.csv", 'w', newline = '\n')
+    writer = csv.writer(file)
+    writer.writerow(["M/Z value", "Name", "Description"])
+    file.close()
+    msg = QMessageBox("New Database created","New csv file has been created")
+    msg.exec()
     
 
 """def write_single_image(path: str, data: Any, meta: dict) -> List[str]:
