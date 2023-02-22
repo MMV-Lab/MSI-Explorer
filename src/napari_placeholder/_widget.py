@@ -139,10 +139,12 @@ class ExampleQWidget(QWidget):
         self.selection_window = SelectionWindow(self.viewer)
         self.selection_window.show()
         
+    # opens metadata window
     def _open_metadata(self):
         self.metadata_window = MetadataWindow()
         self.metadata_window.show()
         
+    # opens imzml file
     def _open_file(self):
         filepath = open_dialog(self, '*.imzML')
         file_reader = napari_get_reader(filepath)
@@ -159,6 +161,7 @@ class ExampleQWidget(QWidget):
         else:
             self.selection_window.display_description(float(self.selection_window.combobox_mz.currentText()))
 
+    # opens analysis window
     def _analyze(self):
         self.analysis_window = AnalysisWindow()
         self.analysis_window.show()
