@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import (QHBoxLayout, QPushButton, QWidget, QComboBox, QLabel, QVBoxLayout,
                             QScrollArea, QLineEdit, QFrame)
-from qtpy.QtCore import Qt, QRect
+from qtpy.QtCore import Qt
 
 if TYPE_CHECKING:
     import napari
@@ -150,8 +150,8 @@ class ExampleQWidget(QWidget):
             self.ms_object = file_reader(filepath)
         except TypeError:
             return
-        self.selection_window.set_ms_data(self.ms_object)
-        self.selection_window.update_plot(self.selection_window.plot(self.ms_object.get_spectrum(34567)))
+        self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(34567))
+        self.selection_window.update_plot(self.selection_window.data_array)
         try:
             self.selection_window.calculate_image(float(self.selection_window.combobox_mz.currentText()))
         except ValueError:

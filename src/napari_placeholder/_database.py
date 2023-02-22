@@ -14,7 +14,7 @@ class DatabaseWindow(QWidget):
         
         # Checkboxes
         checkbox_database_1 = QCheckBox("test")
-        checkbox_database_2 = QCheckBox("database 2")
+        checkbox_database_2 = QCheckBox("Metabolite_database_ver1")
         checkbox_database_3 = QCheckBox("database 3")
         
         checkbox_database_1.setChecked(True)
