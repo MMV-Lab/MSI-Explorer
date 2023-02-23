@@ -3,7 +3,7 @@ from ._writer import write_metadata, save_dialog
 
 class MetadataWindow(QWidget):
     """
-    A (QWidget) Window to supplement and export the metadata of the imzml file
+    A (QWidget) window to supplement and export the metadata of the imzml file
     
     
     Attributes

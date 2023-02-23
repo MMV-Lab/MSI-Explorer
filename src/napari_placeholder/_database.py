@@ -5,7 +5,7 @@ from ._writer import create_new_database
 
 class DatabaseWindow(QWidget):
     """
-    A (QWidget) Window to select databases from a directory and pass the
+    A (QWidget) window to select databases from a directory and pass the
     values from those databases to its parent
     
     
@@ -15,6 +15,17 @@ class DatabaseWindow(QWidget):
         This widget's parent widget
     buttons_widget : QWidget
         Container to hold/position the buttons at the bottom of the widget
+        
+    Methods
+    -------
+    read_database_files()
+        Reads database files, re-displays all databases for selection
+    add_database()
+        Adds a template database
+    delete_database()
+        TODO
+    return_values()
+        Reads data from selected databases, sets data in parent widget and triggers update
     """
     def __init__(self, parent):
         """
@@ -72,6 +83,9 @@ class DatabaseWindow(QWidget):
         self.layout().addWidget(self.data_frame)
         
     def _read_database_files(self):
+        """
+        Reads database files, re-displays all databases for selection
+        """
         data_frame = self.data_frame
         new_data_frame = QFrame()
         new_data_frame.setLayout(QVBoxLayout())
@@ -103,7 +117,7 @@ class DatabaseWindow(QWidget):
         """
         TODO
         """
-        pass
+        raise NotImplementedError("Deleting a database is not implemented yet!")
     
     def _return_values(self):
         """

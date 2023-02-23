@@ -14,7 +14,38 @@ from ._analysis import AnalysisWindow
 
 # TODO: check tests
 class ExampleQWidget(QWidget):
+    """
+    The main widget of our application
+    
+    Attributes
+    ----------
+    viewer : Viewer
+        The Napari viewer instance
+    selection_window : QWidget 
+        The window handling the selection of m/z values
+    metadata_window : QWidget
+        The window handling the exporting of metadata
+    ms_object : Maldi_MS
+        Maldi_MS object holding the metadata
+    analysis_window : QWidget
+        The window handling the analysis of selected regions of interest
+        
+    Methods
+    -------
+    open_metadata()
+        Opens a [MetadataWindow]
+    open_file()
+        Opens dialog for user to choose a file, passes data to selection_window
+    analyze()
+        Opens an [AnalysisWindow]
+    """
     def __init__(self, napari_viewer):
+        """
+        Parameters
+        ----------
+        viewer : Viewer
+            The Napari viewer instance
+        """
         super().__init__()
         self.viewer = napari_viewer
 
@@ -141,11 +172,17 @@ class ExampleQWidget(QWidget):
         
     # opens metadata window
     def _open_metadata(self):
+        """
+        Opens a [MetadataWindow]
+        """
         self.metadata_window = MetadataWindow()
         self.metadata_window.show()
         
     # opens imzml file
     def _open_file(self):
+        """
+        Opens dialog for user to choose a file, passes data to selection_window
+        """
         filepath = open_dialog(self, '*.imzML')
         file_reader = napari_get_reader(filepath)
         try:
@@ -163,6 +200,9 @@ class ExampleQWidget(QWidget):
 
     # opens analysis window
     def _analyze(self):
+        """
+        Opens an [AnalysisWindow]
+        """
         self.analysis_window = AnalysisWindow()
         self.analysis_window.show()
         

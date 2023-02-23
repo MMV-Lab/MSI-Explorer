@@ -2,7 +2,7 @@ from qtpy.QtWidgets import QWidget, QPushButton, QGridLayout, QMessageBox
 
 class AnalysisWindow(QWidget):
     """
-    A (QWidget) Window to run analysis on selected data
+    A (QWidget) window to run analysis on selected data
     
     
     Methods
