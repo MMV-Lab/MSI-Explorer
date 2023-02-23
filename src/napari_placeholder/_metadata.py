@@ -2,6 +2,26 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QFrame, QLabel, QLineEdit, QHBo
 from ._writer import write_metadata, save_dialog
 
 class MetadataWindow(QWidget):
+    """
+    A (QWidget) window to supplement and export the metadata of the imzml file
+    
+    
+    Attributes
+    ----------
+    data_frame : QFrame
+        Container to hold the key/value pairs
+    
+    Methods
+    -------
+    export()
+        Opens save dialog, calls writer
+    compile_metadata()
+        Compiles metadata from all lines and returns it
+    add_line()
+        Adds an empty line at the bottom
+    check_for_empty_line()
+        Checks if last line is empty
+    """
     def __init__(self):
         super().__init__()
         self.setLayout(QVBoxLayout())
@@ -68,6 +88,10 @@ class MetadataWindow(QWidget):
         self._add_line()
         
     def _export(self):
+        """
+        Opens a Dialog, gets a filepath from the dialog.
+        Calls metadata writer with [filepath] and [metadata]
+        """
         metadata = self._compile_metadata()
         filepath = save_dialog(self, '*.csv')[0]
         try:
@@ -76,6 +100,14 @@ class MetadataWindow(QWidget):
             return
     
     def _compile_metadata(self):
+        """
+        Reads metadata from all lines
+        
+        Returns
+        -------
+        list
+            A list of tuples that holds key/value pairs of metadata
+        """
         metadata = []
         parent_layout = self.layout().itemAt(0).widget().layout()
         for i in range(0, parent_layout.count() - 1):
@@ -85,8 +117,10 @@ class MetadataWindow(QWidget):
             metadata.append((key,value))
         return metadata
     
-    # Adds two lineedits for user to input key/value pair
     def _add_line(self):
+        """
+        Creates a new line with [is_empty] set to true, adds it to the [data_frame]
+        """
         key = QLineEdit()
         value = QLineEdit()
         
@@ -99,6 +133,9 @@ class MetadataWindow(QWidget):
         self.data_frame.layout().addWidget(frame)
         
         def mark_line_used():
+            """
+            Marks the line as not empty (even if the text has been removed again)
+            """
             frame.is_empty = False
             
         key.textChanged.connect(mark_line_used)
@@ -106,8 +143,10 @@ class MetadataWindow(QWidget):
         key.textChanged.connect(self._check_for_empty_line)
         value.textChanged.connect(self._check_for_empty_line)
 
-    # If last line is not empty add a new one
     def _check_for_empty_line(self):
+        """
+        Checks if the last line's [is_empty] property is True, otherwise calls [add_line]
+        """
         layout_all_lines = self.layout().itemAt(0).widget().layout()
         last_line = layout_all_lines.itemAt(layout_all_lines.count() -1).widget()
         if not last_line.is_empty:

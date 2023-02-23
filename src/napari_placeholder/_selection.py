@@ -9,7 +9,58 @@ from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
 
 class SelectionWindow(QWidget):
+    """
+    A (QWidget) window to handle selection of m/z values
+    
+    Attributes
+    ----------
+    viewer : Viewer
+        The Napari viewer instance
+    mzs : list
+        Holds all information about m/z, name, description
+    label_mz_annotation : QLabel
+        Displays description of m/z
+    radio_btn_replace_layer : QRadioButton
+        Determines if main image layer is replaced or new one is created
+    lineedit_mz_range : QLineEdit
+        Tolerance in calculating image from m/z
+    combobox_mz : QComboBox
+        Holds all selectable m/z values
+    database_window : QWidget
+        The window to select databases to be used
+    ms_object : Maldi_MS
+        Maldi_MS object holding the metadata
+    data_array : array
+        array holding X and Y coordinates of the current spectrum
+    
+    Methods
+    -------
+    keyPressEvent(event)
+        gets spectrum at position of [event] and passes it to [update_plot]
+    plot(data)
+        Creates a canvas for a given spectrum
+    update_plot(data)
+        Replaces displayed canvas with new canvas
+    reset_plot()
+        Replaces canvas with fully zoomed out canvas
+    select_database()
+        Opens a [DatabaseWindow]
+    calculate_image()
+        Replaces/Adds new image layer with selected m/z & tolerance
+    set_data()
+        Set MSObject and the current spectrum data as attributes
+    update_mzs()
+        Updates the m/z values displayed in the combobox to match those selected from the databases
+    display_description()
+        Adds the description of the metabolite to the label
+    """
     def __init__(self, viewer):
+        """
+        Parameters
+        ----------
+        viewer : Viewer
+            The Napari viewer instance
+        """
         super().__init__()
         self.viewer = viewer
         self.setLayout(QVBoxLayout())
@@ -89,6 +140,16 @@ class SelectionWindow(QWidget):
         
         @self.viewer.bind_key('s')
         def read_cursor_position(viewer):
+            """
+            Gets index of spectrum at cursor position,
+            gets spectrum at index,
+            passes spectrum to [update_plot]
+            
+            Parameters
+            ----------
+            viewer : Viewer
+                The Napari viewer instance
+            """
             index = self.ms_object.get_index(
                 round(viewer.cursor.position[0]),round(viewer.cursor.position[1]))
             #print(index)
@@ -98,6 +159,16 @@ class SelectionWindow(QWidget):
             self.update_plot(data)
         
     def keyPressEvent(self, event):
+        """
+        Gets index of spectrum at event position,
+        gets spectrum at index,
+        passes spectrum to [update_plot]
+        
+        Parameters
+        ----------
+        event : Event
+            The Event calling this function
+        """
         if event.text() == 's':
             index = self.ms_object.get_index(
                 round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1]))
@@ -109,6 +180,21 @@ class SelectionWindow(QWidget):
         
     # creates plot from passed data
     def plot(self, data = None):
+        """
+        Creates a canvas for a given spectrum [data]
+        
+        If the argument `data` is not passed in, an empty canvas is produced
+        
+        Parameters
+        ----------
+        data : list, optional
+            The numpy arrays holding x and y coordinates (default is None)
+            
+        Returns
+        -------
+        canvas
+            A canvas displaying the passed spectrum
+        """
         fig = Figure(figsize=(6,6))
         #fig.patch.set_facecolor("#262930")
         axes = fig.add_subplot(111)
@@ -135,11 +221,19 @@ class SelectionWindow(QWidget):
         canvas = FigureCanvas(fig)
             
         def onselect(min, max):
+            """
+            Triggers update of plot to display only data between min and max
+            
+            Parameters
+            ----------
+            min : int
+                Minimum m/z value to be displayed
+            max : int
+                Maximum m/z value to be displayed
+            """
             if not hasattr(self, 'data_array'):
                 return
                 
-            """if self.data_array.shape == ():
-                return"""
             min_bound = self.data_array[:,self.data_array[0,:] >= min]
             both_bound = min_bound[:,min_bound[0,:] <= max]
             self.update_plot(both_bound)
@@ -150,22 +244,43 @@ class SelectionWindow(QWidget):
         return canvas
     
     def update_plot(self, data):
+        """
+        Replaces displayed canvas with new canvas created from [data]
+        
+        Parameters
+        ----------
+        data : list
+            The numpy arrays holding x and y coordinates
+        """
         old_canvas = self.canvas
         new_canvas = self.plot(data)
-        self.layout().itemAt(0).widget().layout().removeWidget(old_canvas)
+        self.layout().itemAt(0).widget().layout().replaceWidget(old_canvas, new_canvas)
+        #self.layout().itemAt(0).widget().layout().removeWidget(old_canvas)
         old_canvas.hide()
-        self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
+        #self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
         
-    # fully zooms out plot
     def reset_plot(self):
+        """
+        Replaces canvas with fully zoomed out canvas
+        """
         self.update_plot(self.data_array)
         
-    # opens database selection window
     def select_database(self):
+        """
+        Opens a [DatabaseWindow]
+        """
         self.database_window = DatabaseWindow(self)
         self.database_window.show()
         
     def calculate_image(self, mz):
+        """
+        Replaces/Adds new image layer with selected m/z & tolerance
+        
+        Parameters
+        ----------
+        mz : array
+            the intensity values of the given m/z
+        """
         if mz == '':
             return
         mz = float(mz)
@@ -186,16 +301,37 @@ class SelectionWindow(QWidget):
     
     # Sets MAldiMsData object
     def set_data(self, ms_data, data):
+        """
+        Set MSObject and the current spectrum data as attributes
+        
+        Parameters
+        ----------
+        ms_data : Maldi_MS
+            Maldi_MS object holding the metadata of the loaded imzML file
+        data : list
+            Arrays of X/Y coordinates of spectrum
+        """
         self.ms_object = ms_data
         self.data_array = np.array(data)
         
     def update_mzs(self):
+        """
+        Updates the m/z values displayed in the combobox to match those selected from the databases
+        """
         for i in range(0,self.combobox_mz.count()):
             self.combobox_mz.removeItem(0)
-        for i in range(0, len(self.mzs), 2):
+        for i in range(0, len(self.mzs), 3):
             self.combobox_mz.addItem(self.mzs[i])
             
     def display_description(self, mz):
+        """
+        Adds the description of the metabolite to the label
+        
+        Parameters
+        ----------
+        mz : list
+            List of m/z values, names and descriptions of metabolites 
+        """
         try:
             mz_index = self.mzs.index(mz)
         except ValueError:
@@ -203,6 +339,9 @@ class SelectionWindow(QWidget):
         name_index = mz_index + 1
         name = self.mzs[name_index]
         self.label_mz_annotation.setText(name)
+        description_index = name_index + 1
+        description = self.mzs[description_index]
+        self.label_mz_annotation.setToolTip(description)
         
     
 

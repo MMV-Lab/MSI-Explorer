@@ -4,7 +4,36 @@ import csv, os
 from ._writer import create_new_database
 
 class DatabaseWindow(QWidget):
+    """
+    A (QWidget) window to select databases from a directory and pass the
+    values from those databases to its parent
+    
+    
+    Attributes
+    ----------
+    parent : QWidget
+        This widget's parent widget
+    buttons_widget : QWidget
+        Container to hold/position the buttons at the bottom of the widget
+        
+    Methods
+    -------
+    read_database_files()
+        Reads database files, re-displays all databases for selection
+    add_database()
+        Adds a template database
+    delete_database()
+        TODO
+    return_values()
+        Reads data from selected databases, sets data in parent widget and triggers update
+    """
     def __init__(self, parent):
+        """
+        Parameters
+        ----------
+        parent : QWidget
+            This widget's parent widget
+        """
         super().__init__()
         self.setLayout(QVBoxLayout())
         
@@ -54,6 +83,9 @@ class DatabaseWindow(QWidget):
         self.layout().addWidget(self.data_frame)
         
     def _read_database_files(self):
+        """
+        Reads database files, re-displays all databases for selection
+        """
         data_frame = self.data_frame
         new_data_frame = QFrame()
         new_data_frame.setLayout(QVBoxLayout())
@@ -75,13 +107,22 @@ class DatabaseWindow(QWidget):
         
         
     def _add_database(self):
+        """
+        Adds a template database
+        """
         create_new_database(self.db_directory)
         self._read_database_files()
     
     def _delete_database(self):
-        pass
+        """
+        TODO
+        """
+        raise NotImplementedError("Deleting a database is not implemented yet!")
     
     def _return_values(self):
+        """
+        Reads data from selected databases, sets data in parent widget and triggers update
+        """
         mzs = []
         data = self.layout().itemAt(0).widget().layout()
         for i in range(1, data.indexOf(self.buttons_widget)):
@@ -91,6 +132,7 @@ class DatabaseWindow(QWidget):
                     for row in database_reader:
                         mzs.append(row[0])
                         mzs.append(row[1])
+                        mzs.append(row[2])
 
         self.parent.mzs = mzs
         self.parent.update_mzs()
