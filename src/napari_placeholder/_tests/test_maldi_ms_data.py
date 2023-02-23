@@ -24,8 +24,8 @@ def test_get_spectrum():
     assert len(s[1]) == 8399
     assert s[0][5] == 100.5
 
-def test_get_metadata():
-    metadata = maldi_data.get_metadata()
+def test_get_metadata_json():
+    metadata = maldi_data.get_metadata_json()
     assert metadata[6:27] == '"file_description": {'
 
 def test_get_ion_image():
