@@ -66,10 +66,13 @@ class ExampleQWidget(QWidget):
         btn_execute_preprocessing = QPushButton('Execute')
         btn_analyze_roi = QPushButton('Analyze')
         btn_minimize_preprocessing = QPushButton('-')
+        self.btn_maximize_preprocessing = QPushButton('+')
         
         btn_view_metadata.clicked.connect(self._open_metadata)
         btn_load_imzml.clicked.connect(self._open_file)
         btn_analyze_roi.clicked.connect(self._analyze)
+        btn_minimize_preprocessing.clicked.connect(self._hide_preprocessing)
+        self.btn_maximize_preprocessing.clicked.connect(self._show_preprocessing)
         
         # Comboboxes
         combobox_scale = QComboBox()
@@ -95,11 +98,14 @@ class ExampleQWidget(QWidget):
         top_buttons.layout().addWidget(btn_view_metadata)
         
         widget.layout().addWidget(top_buttons)
+        widget.layout().addWidget(self.btn_maximize_preprocessing)
+        widget.layout().setAlignment(self.btn_maximize_preprocessing,Qt.AlignRight)
+        self.btn_maximize_preprocessing.hide()
         
-        preprocessing_frame = QFrame()
-        preprocessing_frame.setLayout(QVBoxLayout())
+        self.preprocessing_frame = QFrame()
+        self.preprocessing_frame.setLayout(QVBoxLayout())
         
-        preprocessing_frame.setStyleSheet("border-width: 1;"
+        self.preprocessing_frame.setStyleSheet("border-width: 1;"
                                    "border-radius: 3;"
                                    "border-style: solid;"
                                    "border-color: rgb(10, 10, 10);"
@@ -111,32 +117,32 @@ class ExampleQWidget(QWidget):
         preprocessing_header.layout().addWidget(btn_minimize_preprocessing)
         preprocessing_header.layout().setAlignment(btn_minimize_preprocessing,Qt.AlignRight)
         
-        preprocessing_frame.layout().addWidget(preprocessing_header)
+        self.preprocessing_frame.layout().addWidget(preprocessing_header)
         
         preprocessing_scale = QWidget()
         preprocessing_scale.setLayout(QHBoxLayout())
         preprocessing_scale.layout().addWidget(label_scale)
         preprocessing_scale.layout().addWidget(combobox_scale)
         
-        preprocessing_frame.layout().addWidget(preprocessing_scale)
+        self.preprocessing_frame.layout().addWidget(preprocessing_scale)
         
         preprocessing_correction = QWidget()
         preprocessing_correction.setLayout(QHBoxLayout())
         preprocessing_correction.layout().addWidget(label_correction)
         preprocessing_correction.layout().addWidget(lineedit_correction)
         
-        preprocessing_frame.layout().addWidget(preprocessing_correction)
+        self.preprocessing_frame.layout().addWidget(preprocessing_correction)
         
         preprocessing_noise_reduction = QWidget()
         preprocessing_noise_reduction.setLayout(QHBoxLayout())
         preprocessing_noise_reduction.layout().addWidget(label_noise_reduction)
         preprocessing_noise_reduction.layout().addWidget(lineedit_noise_reduction)
         
-        preprocessing_frame.layout().addWidget(preprocessing_noise_reduction)
+        self.preprocessing_frame.layout().addWidget(preprocessing_noise_reduction)
         
-        preprocessing_frame.layout().addWidget(btn_execute_preprocessing)
+        self.preprocessing_frame.layout().addWidget(btn_execute_preprocessing)
         
-        widget.layout().addWidget(preprocessing_frame)
+        widget.layout().addWidget(self.preprocessing_frame)
         
         roi_frame = QFrame()
         roi_frame.setLayout(QVBoxLayout())
@@ -205,6 +211,18 @@ class ExampleQWidget(QWidget):
         """
         self.analysis_window = AnalysisWindow()
         self.analysis_window.show()
+        
+        
+    # hides preprocessing steps
+    def _hide_preprocessing(self):
+        self.btn_maximize_preprocessing.show()
+        self.preprocessing_frame.hide()
+        
+        
+    # shows preprocessing steps
+    def _show_preprocessing(self):
+        self.preprocessing_frame.show()
+        self.btn_maximize_preprocessing.hide()
         
         
         
