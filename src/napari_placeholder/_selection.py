@@ -66,7 +66,7 @@ class SelectionWindow(QWidget):
         self.setLayout(QVBoxLayout())
 
         self.plot()
-        self.mzs = []
+        self.metabolites = {}
         
         ### QObjects
         
@@ -320,8 +320,8 @@ class SelectionWindow(QWidget):
         """
         for i in range(0,self.combobox_mz.count()):
             self.combobox_mz.removeItem(0)
-        for i in range(0, len(self.mzs), 3):
-            self.combobox_mz.addItem(self.mzs[i])
+        for i in range(0, len(self.metabolites)):
+            self.combobox_mz.addItem(list(self.metabolites)[i])
             
     def display_description(self, mz):
         """
@@ -329,19 +329,17 @@ class SelectionWindow(QWidget):
         
         Parameters
         ----------
-        mz : list
-            List of m/z values, names and descriptions of metabolites 
+        mz : String
+            m/z of the currently selected metabolite
         """
         try:
-            mz_index = self.mzs.index(mz)
+            name = self.metabolites[mz][0]
         except ValueError:
             return
-        name_index = mz_index + 1
-        name = self.mzs[name_index]
         self.label_mz_annotation.setText(name)
-        description_index = name_index + 1
-        description = self.mzs[description_index]
+        description = self.metabolites[mz][1]
         self.label_mz_annotation.setToolTip(description)
+        
         
     
 
