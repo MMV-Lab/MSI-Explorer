@@ -123,18 +123,20 @@ class DatabaseWindow(QWidget):
         """
         Reads data from selected databases, sets data in parent widget and triggers update
         """
-        mzs = []
+        metabolites = {}
+        key_list = []
         data = self.layout().itemAt(0).widget().layout()
         for i in range(1, data.indexOf(self.buttons_widget)):
             if data.itemAt(i).widget().isChecked():
                 with open(self.db_directory+data.itemAt(i).widget().text() + ".csv", newline='') as csvfile:
                     database_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
                     for row in database_reader:
-                        mzs.append(row[0])
-                        mzs.append(row[1])
-                        mzs.append(row[2])
+                        metabolites[row[0]] = (row[1],row[2])
+                        key_list.append(row[0])
 
-        self.parent.mzs = mzs
+        key_list = sorted(key_list, key = float)
+        metabolites_sorted = {key: metabolites[key] for key in key_list}
+        self.parent.metabolites = metabolites_sorted
         self.parent.update_mzs()
         self.close()
         

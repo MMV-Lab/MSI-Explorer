@@ -16,14 +16,16 @@ class SelectionWindow(QWidget):
     ----------
     viewer : Viewer
         The Napari viewer instance
-    mzs : list
-        Holds all information about m/z, name, description
+    metabolites : dict
+        Holds all information about m/z, (name, description)
     label_mz_annotation : QLabel
         Displays description of m/z
     radio_btn_replace_layer : QRadioButton
         Determines if main image layer is replaced or new one is created
     lineedit_mz_range : QLineEdit
         Tolerance in calculating image from m/z
+    lineedit_mz_filter : QLineEdit
+        Filter string for metabolites
     combobox_mz : QComboBox
         Holds all selectable m/z values
     database_window : QWidget
@@ -53,6 +55,8 @@ class SelectionWindow(QWidget):
         Updates the m/z values displayed in the combobox to match those selected from the databases
     display_description()
         Adds the description of the metabolite to the label
+    filter_mzs()
+        Filters metabolites by text in lineedit_mz_filter
     """
     def __init__(self, viewer):
         """
@@ -66,7 +70,7 @@ class SelectionWindow(QWidget):
         self.setLayout(QVBoxLayout())
 
         self.plot()
-        self.mzs = []
+        self.metabolites = {}
         
         ### QObjects
         
@@ -92,6 +96,10 @@ class SelectionWindow(QWidget):
         
         # Lineedits
         self.lineedit_mz_range = QLineEdit("0.1")
+        self.lineedit_mz_filter = QLineEdit()
+        self.lineedit_mz_filter.setPlaceholderText("Filter")
+        
+        self.lineedit_mz_filter.editingFinished.connect(self.filter_mzs)
         
         # Comboboxes
         self.combobox_mz = QComboBox()
@@ -123,6 +131,7 @@ class SelectionWindow(QWidget):
         mz_frame = QWidget()
         mz_frame.setLayout(QHBoxLayout())
         mz_frame.layout().addWidget(label_mz)
+        mz_frame.layout().addWidget(self.lineedit_mz_filter)
         mz_frame.layout().addWidget(self.combobox_mz)
         mz_frame.layout().addWidget(self.label_mz_annotation)
         mz_frame.layout().addWidget(label_range)
@@ -320,8 +329,8 @@ class SelectionWindow(QWidget):
         """
         for i in range(0,self.combobox_mz.count()):
             self.combobox_mz.removeItem(0)
-        for i in range(0, len(self.mzs), 3):
-            self.combobox_mz.addItem(self.mzs[i])
+        for i in range(0, len(self.metabolites)):
+            self.combobox_mz.addItem(list(self.metabolites)[i])
             
     def display_description(self, mz):
         """
@@ -329,21 +338,39 @@ class SelectionWindow(QWidget):
         
         Parameters
         ----------
-        mz : list
-            List of m/z values, names and descriptions of metabolites 
+        mz : String
+            m/z of the currently selected metabolite
         """
+        if mz == "":
+            self.label_mz_annotation.setText("")
+            self.label_mz_annotation.setToolTip("")
+            return
         try:
-            mz_index = self.mzs.index(mz)
+            name = self.metabolites[str(mz)][0]
         except ValueError:
             return
-        name_index = mz_index + 1
-        name = self.mzs[name_index]
         self.label_mz_annotation.setText(name)
-        description_index = name_index + 1
-        description = self.mzs[description_index]
+        description = self.metabolites[str(mz)][1]
         self.label_mz_annotation.setToolTip(description)
         
-    
+        
+    def filter_mzs(self):
+        """
+        Filters the metabolites' m/z values displayed in the self.combobox_mz to display only those
+        matching the filter_text. Checks m/z value, name and description.
+        """
+        filter_text = self.lineedit_mz_filter.text()
+        self.combobox_mz.clear()
+        for entry in self.metabolites:
+            if (
+                filter_text in str(entry)
+                or filter_text in self.metabolites[str(entry)][0]
+                or filter_text in self.metabolites[str(entry)][1]
+                ):
+                self.combobox_mz.addItem(entry)
+            
+            
+        
 
         
         
