@@ -2,7 +2,7 @@ from pyimzml.ImzMLParser import ImzMLParser
 from napari_placeholder import Maldi_MS
 from qtpy.QtWidgets import QFileDialog
 
-def open_dialog(parent, filetype):
+def open_dialog(parent, filetype = "", directory = ""):
     """
     Opens a dialog to select a file to open
     
@@ -12,6 +12,8 @@ def open_dialog(parent, filetype):
         Parent widget for the dialog
     filetype : str
         Only files of this filetype will be displayed
+    directory : str
+        Opens view at the specified directory
         
     Returns
     -------
@@ -19,7 +21,7 @@ def open_dialog(parent, filetype):
         Path of the selected file
     """
     dialog = QFileDialog()
-    filepath = dialog.getOpenFileName(parent, "Select imzML file",filter = filetype)[0]
+    filepath = dialog.getOpenFileName(parent, "Select imzML file",filter = filetype, directory = directory)[0]
     return filepath
 
 def napari_get_reader(path):
