@@ -2,6 +2,7 @@ from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QC
 import csv, os
 
 from ._writer import create_new_database
+from ._reader import open_dialog
 
 class DatabaseWindow(QWidget):
     """
@@ -23,7 +24,7 @@ class DatabaseWindow(QWidget):
     add_database()
         Adds a template database
     delete_database()
-        TODO
+        Allows user to select file to delete
     return_values()
         Reads data from selected databases, sets data in parent widget and triggers update
     """
@@ -115,9 +116,14 @@ class DatabaseWindow(QWidget):
     
     def _delete_database(self):
         """
-        TODO
+        Opens a file dialog in the database directory. Deletes selected csv file
         """
-        raise NotImplementedError("Deleting a database is not implemented yet!")
+        filepath = open_dialog(self, filetype = "*csv", directory = self.db_directory)
+        try:
+            os.remove(filepath)
+        except FileNotFoundError:
+            return
+        self._read_database_files()
     
     def _return_values(self):
         """
