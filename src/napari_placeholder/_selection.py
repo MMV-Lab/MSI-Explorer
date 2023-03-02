@@ -34,6 +34,8 @@ class SelectionWindow(QWidget):
         Maldi_MS object holding the metadata
     data_array : array
         array holding X and Y coordinates of the current spectrum
+    displayed_data : array
+        array holding X and Y coordinates of the currently displayed part of the current spectrum
     
     Methods
     -------
@@ -47,7 +49,7 @@ class SelectionWindow(QWidget):
         Replaces canvas with fully zoomed out canvas
     select_database()
         Opens a [DatabaseWindow]
-    calculate_image()
+    calculate_image(mz, tolerance)
         Replaces/Adds new image layer with selected m/z & tolerance
     set_data()
         Set MSObject and the current spectrum data as attributes
@@ -57,6 +59,8 @@ class SelectionWindow(QWidget):
         Adds the description of the metabolite to the label
     filter_mzs()
         Filters metabolites by text in lineedit_mz_filter
+    display_image_from_plot()
+        Displays image of the currently displayed m/z range in the plot
     """
     def __init__(self, viewer):
         """
@@ -87,6 +91,7 @@ class SelectionWindow(QWidget):
         btn_select_database = QPushButton("Select")
         
         btn_reset_view.clicked.connect(self.reset_plot)
+        btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
         
         # Radiobuttons
@@ -245,6 +250,7 @@ class SelectionWindow(QWidget):
                 
             min_bound = self.data_array[:,self.data_array[0,:] >= min]
             both_bound = min_bound[:,min_bound[0,:] <= max]
+            self.displayed_data = both_bound
             self.update_plot(both_bound)
     
         from matplotlib.widgets import SpanSelector
@@ -272,6 +278,7 @@ class SelectionWindow(QWidget):
         """
         Replaces canvas with fully zoomed out canvas
         """
+        self.displayed_data = self.data_array
         self.update_plot(self.data_array)
         
     def select_database(self):
@@ -281,19 +288,22 @@ class SelectionWindow(QWidget):
         self.database_window = DatabaseWindow(self)
         self.database_window.show()
         
-    def calculate_image(self, mz):
+    def calculate_image(self, mz, tolerance = None):
         """
         Replaces/Adds new image layer with selected m/z & tolerance
         
         Parameters
         ----------
-        mz : array
-            the intensity values of the given m/z
+        mz : str
+            the m/z value to calculate the image for
+        tolerance : float
+            the tolerance for the m/z value
         """
         if mz == '':
             return
         mz = float(mz)
-        tolerance = float(self.lineedit_mz_range.text())
+        if tolerance == None:
+            tolerance = float(self.lineedit_mz_range.text())
         try:
             image = self.ms_object.get_ion_image(mz, tolerance)
         except AttributeError:
@@ -322,6 +332,7 @@ class SelectionWindow(QWidget):
         """
         self.ms_object = ms_data
         self.data_array = np.array(data)
+        self.displayed_data = self.data_array
         
     def update_mzs(self):
         """
@@ -369,6 +380,16 @@ class SelectionWindow(QWidget):
                 ):
                 self.combobox_mz.addItem(entry)
             
+            
+    def display_image_from_plot(self):
+        """
+        Displays image of the currently displayed m/z range in the plot
+        """
+        if not hasattr(self, 'displayed_data'):
+            return
+        tolerance = self.displayed_data[-1,0] - self.displayed_data[0,0]
+        mz = (self.displayed_data[0,0] + self.displayed_data[-1,0]) / 2
+        self.calculate_image(mz, tolerance)
             
         
 

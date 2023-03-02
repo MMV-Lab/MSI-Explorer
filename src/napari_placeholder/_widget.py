@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import (QHBoxLayout, QPushButton, QWidget, QComboBox, QLabel, QVBoxLayout,
-                            QScrollArea, QLineEdit, QFrame)
+                            QScrollArea, QLineEdit, QFrame, QMessageBox)
 from qtpy.QtCore import Qt
 
 if TYPE_CHECKING:
@@ -194,6 +194,12 @@ class ExampleQWidget(QWidget):
         try:
             self.ms_object = file_reader(filepath)
         except TypeError:
+            return
+        except UnboundLocalError:
+            msg = QMessageBox()
+            msg.setWindowTitle("Error")
+            msg.setText(".ibd file not found in same directory")
+            msg.exec()
             return
         self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(34567))
         self.selection_window.update_plot(self.selection_window.data_array)
