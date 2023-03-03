@@ -191,8 +191,11 @@ class ExampleQWidget(QWidget):
         """
         filepath = open_dialog(self, '*.imzML')
         file_reader = napari_get_reader(filepath)
+        import warnings
         try:
-            self.ms_object = file_reader(filepath)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                self.ms_object = file_reader(filepath)
         except TypeError:
             return
         except UnboundLocalError:
@@ -210,7 +213,6 @@ class ExampleQWidget(QWidget):
         else:
             self.selection_window.display_description(float(self.selection_window.combobox_mz.currentText()))
 
-    # opens analysis window
     def _analyze(self):
         """
         Opens an [AnalysisWindow]
@@ -218,15 +220,17 @@ class ExampleQWidget(QWidget):
         self.analysis_window = AnalysisWindow()
         self.analysis_window.show()
         
-        
-    # hides preprocessing steps
     def _hide_preprocessing(self):
+        """
+        Hides preprocessing steps
+        """
         self.btn_maximize_preprocessing.show()
         self.preprocessing_frame.hide()
         
-        
-    # shows preprocessing steps
     def _show_preprocessing(self):
+        """
+        Shows preprocessing steps
+        """
         self.preprocessing_frame.show()
         self.btn_maximize_preprocessing.hide()
         
