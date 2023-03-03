@@ -1,5 +1,6 @@
 # This is a class to store MALDI-MS data (m/z values and intensities)
-# together with lots of metadata
+# together with lots of metadata (07.02.2023)
+
 import numpy as np
 import matplotlib.pyplot as plt
 import json
@@ -37,6 +38,8 @@ class Maldi_MS():
         return self._spectra[i]
 
     def get_index(self, y, x):
+        # Find the index (i) of a mass spectrum at the position (x, y, 1).
+        # (21.02.2023)
         try:
             i = self._coordinates.index((x, y, 1))
             return i
@@ -54,6 +57,7 @@ class Maldi_MS():
         return self._num_spectra
 
     def get_ion_image(self, mz, tol=0.1):
+        # Export of an ion image for the value mz +/- tol (10.02.2023)
         return getionimage(self._parser, mz, tol)
 
     def plot_spectrum(self, i):
@@ -75,7 +79,8 @@ class Maldi_MS():
         # print(self._spectrum_full_metadata[0].pretty())
 
     def get_tic(self):
-        # calculate the total ion current for all spectra
+        # Calculation of the total ion current for all mass spectra.
+        # (17.02.2023)
         n = self._num_spectra
         tic = np.zeros(n)
 
@@ -85,7 +90,8 @@ class Maldi_MS():
         return tic
 
     def merge_two_spectra(self, spectrum1, spectrum2):
-        # build a new spectrum from spectrum 1 and 2
+        # Build a new mass spectrum from spectra 1 and 2 (14.02.2023)
+
         x1 = spectrum1[0]       # m/z values of the 1st spectrum
         y1 = spectrum1[1]       # intensities of the 1st spectrum
         x2 = spectrum2[0]
@@ -125,6 +131,9 @@ class Maldi_MS():
         return [x3, y3]
 
     def get_metadata(self):
+        # Read the dictionary p.metadata.pretty() to extract some metadata.
+        # (23.02.2023)
+
         meta = self._metadata
         d = dict()
 
@@ -180,6 +189,7 @@ class Maldi_MS():
         except BaseException:
             pass
 
+        """
         try:
             inst_id = meta['instrument_configurations'].keys()
             inst_id = list(inst_id)
@@ -206,5 +216,6 @@ class Maldi_MS():
                 meta['instrument_configurations'][inst_id]['components'][0]['pulse duration']
         except BaseException:
             pass
+        """
 
         return d
