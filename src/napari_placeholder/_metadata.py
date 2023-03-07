@@ -22,7 +22,13 @@ class MetadataWindow(QWidget):
     check_for_empty_line()
         Checks if last line is empty
     """
-    def __init__(self):
+    def __init__(self, ms_object):
+        """
+        Parameters
+        ----------
+        ms_object
+            The ms object holding the data from the ibd and imzml file
+        """
         super().__init__()
         self.setLayout(QVBoxLayout())
         
@@ -61,26 +67,18 @@ class MetadataWindow(QWidget):
         
         self.data_frame.layout().addWidget(header_frame)
         
-        temp_frame_1 = QWidget()
-        temp_frame_1.setLayout(QHBoxLayout())
-        temp_frame_1.layout().addWidget(label_key_1)
-        temp_frame_1.layout().addWidget(label_value_1)
+        metadata = ms_object.get_metadata()
         
-        self.data_frame.layout().addWidget(temp_frame_1)
-        
-        temp_frame_2 = QWidget()
-        temp_frame_2.setLayout(QHBoxLayout())
-        temp_frame_2.layout().addWidget(label_key_2)
-        temp_frame_2.layout().addWidget(label_value_2)
-        
-        self.data_frame.layout().addWidget(temp_frame_2)
-        
-        temp_frame_3 = QWidget()
-        temp_frame_3.setLayout(QHBoxLayout())
-        temp_frame_3.layout().addWidget(label_key_3)
-        temp_frame_3.layout().addWidget(label_value_3)
-        
-        self.data_frame.layout().addWidget(temp_frame_3)
+        for key in metadata:
+            key_label = QLabel(key)
+            value_label = QLabel(str(metadata[key]))
+            
+            frame = QWidget()
+            frame.setLayout(QHBoxLayout())
+            frame.layout().addWidget(key_label)
+            frame.layout().addWidget(value_label)
+            
+            self.data_frame.layout().addWidget(frame)
         
         self.layout().addWidget(self.data_frame)        
         self.layout().addWidget(btn_export)

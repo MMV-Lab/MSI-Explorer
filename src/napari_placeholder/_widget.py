@@ -181,7 +181,9 @@ class ExampleQWidget(QWidget):
         """
         Opens a [MetadataWindow]
         """
-        self.metadata_window = MetadataWindow()
+        if not hasattr(self,"ms_object"):
+            return
+        self.metadata_window = MetadataWindow(self.ms_object)
         self.metadata_window.show()
         
     # opens imzml file
