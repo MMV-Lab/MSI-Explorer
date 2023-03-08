@@ -206,14 +206,14 @@ class ExampleQWidget(QWidget):
             msg.setText(".ibd file not found in same directory")
             msg.exec()
             return
-        self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(34567))
+        
+        # Take spectrum from the center as a default spectrum
+        x = int(self.ms_object.get_metadata()['max count x'] / 2)
+        y = int(self.ms_object.get_metadata()['max count y'] / 2)
+        index = self.ms_object.get_index(y, x)
+        self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(index))
         self.selection_window.update_plot(self.selection_window.data_array)
-        try:
-            self.selection_window.calculate_image(float(self.selection_window.combobox_mz.currentText()))
-        except ValueError:
-            pass
-        else:
-            self.selection_window.display_description(float(self.selection_window.combobox_mz.currentText()))
+        self.selection_window.display_image_from_plot()
 
     def _analyze(self):
         """
