@@ -4,6 +4,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+import vaex
+# import time
+import random
 from pyimzml.ImzMLParser import getionimage
 
 class Maldi_MS():
@@ -12,8 +15,8 @@ class Maldi_MS():
         self._spectra = list()
         self._coordinates = list()
         for i, (x, y, z) in enumerate(p.coordinates):
-            mzs, intensities = p.getspectrum(i)
-            self._spectra.append([mzs, intensities])    # list of lists
+            mz, intensities = p.getspectrum(i)
+            self._spectra.append([mz, intensities])     # list of lists
             self._coordinates.append((x, y, z))         # list of tuples
 
         self._metadata = p.metadata.pretty()            # nested dictionary
@@ -57,15 +60,15 @@ class Maldi_MS():
         return self._num_spectra
 
     def get_ion_image(self, mz, tol=0.1):
-        # Export of an ion image for the value mz +/- tol (10.02.2023)
+        # Export of an ion image for the value m/z +/- tol (10.02.2023)
         return getionimage(self._parser, mz, tol)
 
     def plot_spectrum(self, i):
         i = self.check_i(i)
         spec = self._spectra[i]
-        mzs = spec[0]
+        mz = spec[0]
         intensities = spec[1]
-        plt.plot(mzs, intensities)
+        plt.plot(mz, intensities)
         plt.xlabel('m/z')
         plt.ylabel('intensity')
         title1 = 'Spectrum # %d' % (i)
@@ -219,3 +222,56 @@ class Maldi_MS():
         """
 
         return d
+
+    def calc_mean_spec(self, n=1000):
+        # calculate the mean spectrum for a number of spectra (02.03.2023)
+
+        # start = time.process_time()   # to stop the run time
+
+        # choose n random spectra from 0 to _num_spectra - 1
+        if n < self._num_spectra:
+            index = random.sample(range(self._num_spectra), n)
+        else:
+            index = range(self._num_spectra)
+            n = self._num_spectra
+
+        # n = self._num_spectra     # Test with all spectra
+        # index = range(self._num_spectra)
+
+        # calculate a factor for the intensities to set the total ion current
+        # (tic) to median(tic)
+        tic = self.get_tic()
+        median = np.median(tic)
+        quotient = tic / median
+        factor = np.reciprocal(quotient)
+
+        # start with the first spectrum
+        spec = self._spectra[index[0]]
+        y = spec[1] * factor[0]
+        df = vaex.from_arrays(x=spec[0], y=y) # build a Vaex DataFrame
+
+        # concatenate the other spectra
+        for i in range(1, n):
+            spec = self._spectra[index[i]]
+            y = spec[1] * factor[i]
+            df1 = vaex.from_arrays(x=spec[0], y=y)
+            df = df.concat(df1)         # connect two DataFrames together
+
+            if i % 1000 == 0: print(i)
+
+        df['x'] = df.x.round(3)         # round m/z to one decimal place
+        df = df.groupby(df.x, agg='sum', sort=True)
+        # add up the intensities for equal m/z values
+        df = df[df.y_sum != 0.0]        # remove all data with y_sum == 0.0
+
+        # print('count =', df.count())  # test output
+        # print('m/z =', df.min(df.x), '-', df.max(df.x))
+
+        x = df.x.values.to_numpy()      # convert the Vaex-data to NumPy-ndarray
+        y = df.y_sum.values
+        spec = (x, y)
+
+        # stop = time.process_time()
+        # print('run time:', stop - start, 'seconds')
+
+        return spec
