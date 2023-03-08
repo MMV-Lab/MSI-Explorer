@@ -36,6 +36,8 @@ class SelectionWindow(QWidget):
         array holding X and Y coordinates of the current spectrum
     displayed_data : array
         array holding X and Y coordinates of the currently displayed part of the current spectrum
+    mean_spectrum : tuple
+        tuple holding numpy arrays with X and Y coordinates of the mean spectrum
     
     Methods
     -------
@@ -91,7 +93,7 @@ class SelectionWindow(QWidget):
         btn_reset_view = QPushButton("Reset")
         btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
-        btn_show_mean_spectrum = QPushButton("Show mean spectrum")
+        btn_show_mean_spectrum = QPushButton("Show mean spectrum") # TODO: disable until mean spec is calculated
         
         btn_reset_view.clicked.connect(self.reset_plot)
         btn_display_current_view.clicked.connect(self.display_image_from_plot)
@@ -326,7 +328,7 @@ class SelectionWindow(QWidget):
     # Sets MAldiMsData object
     def set_data(self, ms_data, data):
         """
-        Set MSObject and the current spectrum data as attributes
+        Set MSObject and the current spectrum data as attributes. Writes mean spectrum
         
         Parameters
         ----------
@@ -338,6 +340,7 @@ class SelectionWindow(QWidget):
         self.ms_object = ms_data
         self.data_array = np.array(data)
         self.displayed_data = self.data_array
+        self.mean_spectrum = self.ms_object.calc_mean_spec() # TODO: put in separate thread
         
     def update_mzs(self):
         """
@@ -400,7 +403,8 @@ class SelectionWindow(QWidget):
         """
         Displays the mean spectrum in the graph view
         """
-        pass
+        self.update_plot(self.mean_spectrum)
+
     
 
 
