@@ -36,6 +36,8 @@ class SelectionWindow(QWidget):
         array holding X and Y coordinates of the current spectrum
     displayed_data : array
         array holding X and Y coordinates of the currently displayed part of the current spectrum
+    mean_spectrum : tuple
+        tuple holding numpy arrays with X and Y coordinates of the mean spectrum
     
     Methods
     -------
@@ -61,6 +63,8 @@ class SelectionWindow(QWidget):
         Filters metabolites by text in lineedit_mz_filter
     display_image_from_plot()
         Displays image of the currently displayed m/z range in the plot
+    show_mean_spectrum()
+        Displays the mean spectrum in the graph view
     """
     def __init__(self, viewer):
         """
@@ -89,10 +93,12 @@ class SelectionWindow(QWidget):
         btn_reset_view = QPushButton("Reset")
         btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
+        btn_show_mean_spectrum = QPushButton("Show mean spectrum") # TODO: disable until mean spec is calculated
         
         btn_reset_view.clicked.connect(self.reset_plot)
         btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
+        btn_show_mean_spectrum.clicked.connect(self.show_mean_spectrum)
         
         # Radiobuttons
         self.radio_btn_replace_layer = QRadioButton("Single panel_view")
@@ -130,6 +136,7 @@ class SelectionWindow(QWidget):
         database_frame.setLayout(QHBoxLayout())
         database_frame.layout().addWidget(label_select_database)
         database_frame.layout().addWidget(btn_select_database)
+        database_frame.layout().addWidget(btn_show_mean_spectrum)
         
         self.layout().addWidget(database_frame)
         
@@ -321,7 +328,7 @@ class SelectionWindow(QWidget):
     # Sets MAldiMsData object
     def set_data(self, ms_data, data):
         """
-        Set MSObject and the current spectrum data as attributes
+        Set MSObject and the current spectrum data as attributes. Writes mean spectrum
         
         Parameters
         ----------
@@ -333,6 +340,7 @@ class SelectionWindow(QWidget):
         self.ms_object = ms_data
         self.data_array = np.array(data)
         self.displayed_data = self.data_array
+        self.mean_spectrum = self.ms_object.calc_mean_spec() # TODO: put in separate thread
         
     def update_mzs(self):
         """
@@ -391,7 +399,14 @@ class SelectionWindow(QWidget):
         mz = (self.displayed_data[0,0] + self.displayed_data[-1,0]) / 2
         self.calculate_image(mz, tolerance)
             
-        
+    def show_mean_spectrum(self):
+        """
+        Displays the mean spectrum in the graph view
+        """
+        self.update_plot(self.mean_spectrum)
+
+    
+
 
         
         
