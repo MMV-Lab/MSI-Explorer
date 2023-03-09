@@ -7,10 +7,16 @@ import json
 import vaex
 # import time
 import random
-from pyimzml.ImzMLParser import getionimage
+from pyimzml.ImzMLParser import ImzMLParser, getionimage
 
 class Maldi_MS():
-    def __init__(self, p):
+    def __init__(self, filename):
+        try:
+            p = ImzMLParser(filename)
+            # p = ImzMLParser(filename, include_spectra_metadata='full')
+        except BaseException as err:
+            print('Error:', err)
+
         self._parser = p
         self._spectra = list()
         self._coordinates = list()
@@ -19,7 +25,7 @@ class Maldi_MS():
             self._spectra.append([mz, intensities])     # list of lists
             self._coordinates.append((x, y, z))         # list of tuples
 
-        self._metadata = p.metadata.pretty()            # nested dictionary
+        self._metadata = p.metadata.pretty() # nested dictionary
         # self._spectrum_full_metadata = p.spectrum_full_metadata
         self._num_spectra = len(self._coordinates)      # number of spectra
 
@@ -262,7 +268,6 @@ class Maldi_MS():
         df['x'] = df.x.round(3)         # round m/z to one decimal place
         df = df.groupby(df.x, agg='sum', sort=True)
         # add up the intensities for equal m/z values
-        df = df[df.y_sum != 0.0]        # remove all data with y_sum == 0.0
 
         # print('count =', df.count())  # test output
         # print('m/z =', df.min(df.x), '-', df.max(df.x))
