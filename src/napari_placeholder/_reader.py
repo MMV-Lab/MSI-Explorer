@@ -1,4 +1,3 @@
-from pyimzml.ImzMLParser import ImzMLParser
 from napari_placeholder import Maldi_MS
 from qtpy.QtWidgets import QFileDialog
 
@@ -67,10 +66,4 @@ def reader_function(filename):
         Maldi_MS object
     """
 
-    try:
-        p = ImzMLParser(filename)
-        # p = ImzMLParser(filename, include_spectra_metadata='full')
-    except BaseException as err:
-        print('Error:', err)
-
-    return Maldi_MS(p)
+    return Maldi_MS(filename)
