@@ -1,5 +1,18 @@
-# This is a class to store MALDI-MS data (m/z values and intensities)
-# together with lots of metadata (07.02.2023)
+"""
+Module for the definition of the class Maldi_MS
+
+Imports
+-------
+numpy, matplotlib.pyplot, json, vaex, random, pyimzml.ImzMLParser
+
+Exports
+-------
+Maldi_MS
+
+Copyright © Peter Lampen, ISAS Dortmund, 2023
+"""
+
+# (07.02.2023)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,7 +34,7 @@ class Maldi_MS():
         A list of lists containing two ndarrays: m/z and intensity
     _coordinates : list
         A list of tuples containing the coordinates (x, y, z)
-    _metadata : dictionary
+    _metadata : dict
         A nested dictionary with the metadata of the measurement
     _num_spectra : int
         Number of spectra in the list _spectra
@@ -33,30 +46,29 @@ class Maldi_MS():
     check_i(i)
         check whether i is in the interval [0, _num_spectra-1]
     get_spectrum(i)
-        get a list with m/z and intensity of spectrum i
+        get a list with m/z and intensity of spectrum[i]
     plot_spectrum(i)
-        plot spectrum i with matplotlib.pyplot
+        plot spectrum[i] with matplotlib.pyplot
     get_num_spec()
         get the number of spectra
     get_index(y, x)
-        get the index of the spectrum at the point (x, y, 1)
+        get the index of the spectrum at coordinates (x, y, 1)
     get_coordinates(i)
-        get the coordinates (x, y, 1) of spectrum i
-    get_metadata_json()
-        get a string of the metadata in JSON format
-    print_metadata_json()
-        print the metadata in JSON format to the console
+        get the coordinates (x, y, 1) of spectrum[i]
     get_ion_image(mz, tol)
         get a 2D ndarray with an ion image at m/z +/- tol
     get_tic()
-        get the total ion current (tic)
-    merge_two_spectra(spectrum1, ,spectrum2)
-        merge two Maldi-MS spectra together
+        get the total ion current (tic) of all spectra
+    get_metadata_json()
+        get a string of the metadata in JSON format
     get_metadata()
         get a dictionary with selected metadata
+    merge_two_spectra(spectrum1, ,spectrum2)
+        merge two Maldi-MS spectra together
     calc_mean_spec(n=1000)
-        calculate a men spectrum from n spectra
+        calculate a mean spectrum for n spectra
     """
+
 
     def __init__(self, filename):
         """
@@ -82,16 +94,17 @@ class Maldi_MS():
             self._spectra.append([mz, intensities])     # list of lists
             self._coordinates.append((x, y, z))         # list of tuples
 
-        self._metadata = p.metadata.pretty() # nested dictionary
+        self._metadata = p.metadata.pretty()            # nested dictionary
         # self._spectrum_full_metadata = p.spectrum_full_metadata
         self._num_spectra = len(self._coordinates)      # number of spectra
+
 
     def check_i(self, i):
         """
         check whether index i is in the interval [0, _num_spectra-1]
 
-        Parameters
-        ----------
+        Parameter
+        ---------
         i : int
             Index of a spectrum
 
@@ -99,27 +112,29 @@ class Maldi_MS():
         -------
         int
             i if 0 <= i <= _num_spectra-1
-            -1 if i < 0 or i >= _num_spectra
+            0 if i < 0
+            _num_spectra-1 if i >= _num_spectra
         """
 
-        # Is 0 <= i < self._num_spectra
         try:
             i = int(i)
         except BaseException as err:
             print('Error:', err)
             i = 0
 
+        # Is 0 <= i < self._num_spectra?
         if i < 0: i = 0
         elif i >= self._num_spectra:
             i = self._num_spectra - 1
         return i
 
+
     def get_spectrum(self, i):
         """
         get a list with m/z and intensity of spectrum[i]
 
-        Parameters
-        ----------
+        Parameter
+        ---------
         i : int
             index of spectrum[i]
 
@@ -132,7 +147,17 @@ class Maldi_MS():
         i = self.check_i(i)
         return self._spectra[i]
 
+
     def plot_spectrum(self, i):
+        """
+        plot spectrum[i] with matplotlib.pyplot
+
+        Parameter
+        ---------
+        i : int
+            index of spectrum[i]
+        """
+
         i = self.check_i(i)
         spec = self._spectra[i]
         mz = spec[0]
@@ -144,10 +169,37 @@ class Maldi_MS():
         plt.title(title1)
         plt.show()
 
+
     def get_num_spectra(self):
+        """
+        get the number of spectra
+
+        Returns
+        -------
+        int
+            the number of spectra
+        """
+
         return self._num_spectra
 
+
     def get_index(self, y, x):
+        """
+        get the index of the spectrum at coordinates (x, y, 1)
+
+        Parameters
+        ----------
+        y : int
+        x : int
+            coordinates x and y of the spectrum
+
+        Returns
+        -------
+        int
+            index i of spectrum at coordinates (x, y, 1)
+            -1 if the coordinates are unknown
+        """
+
         # Find the index (i) of a mass spectrum at the position (x, y, 1).
         # (21.02.2023)
         try:
@@ -156,16 +208,58 @@ class Maldi_MS():
         except BaseException:
             return -1
 
+
     def get_coordinates(self, i):
+        """
+        get the coordinates (x, y, 1) of spectrum[i]
+
+
+        Parameter
+        ---------
+        i : int
+            index of spectrum[i]
+
+        Returns
+        -------
+        tuple
+            the coordinates (x, y, 1) of spectrum[i]
+        """
+
         i = self.check_i(i)
         return self._coordinates[i]
 
+
     def get_ion_image(self, mz, tol=0.1):
+        """
+        get a 2D numpy.ndarray with a single ion image at m/z +/- tol
+
+        Parameters
+        ----------
+        mz : float
+            m/z value
+        tol : float
+            tolerance of the m/z value
+
+        Returns
+        -------
+        numpy.ndarray
+            ndarray with an single ion image at given m/z +/- tol
+        """
+
         # Export of an ion image for the value m/z +/- tol (10.02.2023)
         return getionimage(self._parser, mz, tol)
 
+
     def get_tic(self):
-        # Calculation of the total ion current for all mass spectra.
+        """
+        get the total ion current (tic) of all spectra
+
+        Returns
+        -------
+        numpy.ndarray
+            total ion current of all spectra
+        """
+
         # (17.02.2023)
         n = self._num_spectra
         tic = np.zeros(n)
@@ -175,16 +269,34 @@ class Maldi_MS():
 
         return tic
 
+
     def get_metadata_json(self):
+        """
+        get a string of the metadata in JSON format
+
+        Returns
+        -------
+        str
+            all metadata as a string in JSON format
+        """
+
         return json.dumps(self._metadata, sort_keys=False, indent=4)
 
-    def print_metadata_json(self):
-        print(self.get_metadata_json())
 
     # def print_sf_metadata(self):
         # print(self._spectrum_full_metadata[0].pretty())
 
+
     def get_metadata(self):
+        """
+        get a dictionary with selected metadata
+
+        Returns
+        -------
+        dict
+            dictionary with selected metadata
+        """
+
         # Read the dictionary p.metadata.pretty() to extract some metadata.
         # (23.02.2023)
 
@@ -274,7 +386,23 @@ class Maldi_MS():
 
         return d
 
+
     def merge_two_spectra(self, spectrum1, spectrum2):
+        """
+        merge two Maldi-MS spectra together
+
+        Parameters
+        ----------
+        spectrum1 : list
+        spectrum2 : list
+            two sapectra from _spectra in the format [mz, intensity]
+
+        Returns
+        -------
+        list
+            a list with the merged spectrum: [mz, intensity]
+        """
+
         # Build a new mass spectrum from spectra 1 and 2 (14.02.2023)
 
         x1 = spectrum1[0]       # m/z values of the 1st spectrum
@@ -315,7 +443,22 @@ class Maldi_MS():
 
         return [x3, y3]
 
+
     def calc_mean_spec(self, n=1000):
+        """
+        calculate a mean spectrum for n spectra
+
+        Parameters
+        ----------
+        n : int
+            number of spectra, used to calculate a mean spec
+
+        Returns
+        -------
+        list
+            the mean spectrum in the format [mz, intensity]
+        """
+
         # calculate the mean spectrum for a number of spectra (02.03.2023)
 
         # start = time.process_time()   # to stop the run time
