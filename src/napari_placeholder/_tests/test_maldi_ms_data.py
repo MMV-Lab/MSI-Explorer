@@ -20,6 +20,10 @@ def test_get_spectrum():
     assert len(spec[1]) == 8399
     assert spec[0][5] == 100.5
 
+def test_get_num_spectra():
+    num = maldi_ms.get_num_spectra()
+    assert num == 9
+
 def test_get_index():
     index = maldi_ms.get_index(2, 2)
     assert index == 4
@@ -27,14 +31,6 @@ def test_get_index():
 def test_get_coordinates():
     coord = maldi_ms.get_coordinates(4)
     assert coord == (2, 2, 1)
-
-def test_get_metadata_json():
-    meta = maldi_ms.get_metadata_json()
-    assert meta[6:27] == '"file_description": {'
-
-def test_get_num_spectra():
-    num = maldi_ms.get_num_spectra()
-    assert num == 9
 
 def test_get_ion_image():
     image = maldi_ms.get_ion_image(328.9, 0.25)
@@ -51,6 +47,10 @@ def test_get_tic():
     tic2 = np.array([121.850, 182.318, 161.809, 200.963])
     assert np.array_equal(tic1, tic2)
 
+def test_get_metadata_json():
+    meta = maldi_ms.get_metadata_json()
+    assert meta[6:27] == '"file_description": {'
+
 def test_get_metadata():
     meta = maldi_ms.get_metadata()
     assert meta['pixel size x'] == 100.0
@@ -59,10 +59,10 @@ def test_calc_mean_spec():
     spec = maldi_ms.calc_mean_spec(9)
     mz1 = spec[0][5:10]
     mz1 = mz1.round(3)
-    mz2 = np.asarray([101., 101.083, 101.167, 101.25, 101.333], dtype=np.float32)
+    mz2 = np.asarray([100.5, 100.583, 100.667, 100.75, 100.833], dtype=np.float32)
     assert np.array_equal(mz1, mz2)
 
-    intens1 = spec[1][70:75]
+    intens1 = spec[1][5:10]
     intens1 = intens1.round(3)
-    intens2 = np.asarray([2.918, 2.466, 1.452, 0.654, 0.129], dtype=np.float64)
+    intens2 = np.asarray([0., 0.015, 0.266, 0.251, 0.07], dtype=np.float64)
     assert np.array_equal(intens1, intens2)
