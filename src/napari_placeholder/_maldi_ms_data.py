@@ -459,32 +459,33 @@ class Maldi_MS():
             the mean spectrum in the format [mz, intensity]
         """
 
-        # calculate the mean spectrum for a number of spectra (02.03.2023)
-
+        # (02.03.2023)
         # start = time.process_time()   # to stop the run time
 
         # choose n random spectra from 0 to _num_spectra - 1
         if n < self._num_spectra:
-            index = random.sample(range(self._num_spectra), n)
+            index = range(self._num_spectra)
+            index = random.sample(index, n)
         else:
             index = range(self._num_spectra)
             n = self._num_spectra
 
         # calculate a factor for the intensities to set the total ion current
-        # (tic) to median(tic)
+        # (tic) to np.median(tic)
         tic = self.get_tic()
         median = np.median(tic)
         quotient = tic / median
         factor = np.reciprocal(quotient)
 
         # start with the first spectrum
-        spec = self._spectra[index[0]]
-        intens = spec[1] * factor[0]
+        idx = index[0]
+        spec = self._spectra[idx]
+        intens = spec[1] * factor[idx]
         df = vaex.from_arrays(x=spec[0], y=intens)  # build a Vaex DataFrame
 
-        for i in range(1, n):           # concatenate the other spectra
-            spec = self._spectra[index[i]]
-            intens = spec[1] * factor[i]
+        for idx in index[1:]:           # concatenate the other spectra
+            spec = self._spectra[idx]
+            intens = spec[1] * factor[idx]
             df1 = vaex.from_arrays(x=spec[0], y=intens)
             df = df.concat(df1)         # connect two DataFrames
 
