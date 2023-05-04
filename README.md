@@ -1,6 +1,6 @@
 # napari-PLACEHOLDER
 
-[![License BSD-3](https://img.shields.io/pypi/l/napari-PLACEHOLDER.svg?color=green)](https://github.com/MMV-Lab/napari-PLACEHOLDER/raw/main/LICENSE)
+[![License](https://img.shields.io/pypi/l/napari-PLACEHOLDER.svg?color=green)](https://github.com/MMV-Lab/napari-PLACEHOLDER/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/napari-PLACEHOLDER.svg?color=green)](https://pypi.org/project/napari-PLACEHOLDER)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-PLACEHOLDER.svg?color=green)](https://python.org)
 [![tests](https://github.com/MMV-Lab/napari-PLACEHOLDER/workflows/tests/badge.svg)](https://github.com/MMV-Lab/napari-PLACEHOLDER/actions)
