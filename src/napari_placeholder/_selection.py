@@ -90,15 +90,19 @@ class SelectionWindow(QWidget):
         self.label_mz_annotation = QLabel("Annotation")
         
         # Buttons
-        btn_reset_view = QPushButton("Reset")
-        btn_display_current_view = QPushButton("Show image")
+        self.btn_reset_view = QPushButton("Reset")
+        self.btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
-        btn_show_mean_spectrum = QPushButton("Show mean spectrum") # TODO: disable until mean spec is calculated
+        self.btn_show_mean_spectrum = QPushButton("Show mean spectrum") # TODO: disable until mean spec is calculated
         
-        btn_reset_view.clicked.connect(self.reset_plot)
-        btn_display_current_view.clicked.connect(self.display_image_from_plot)
+        self.btn_reset_view.clicked.connect(self.reset_plot)
+        self.btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
-        btn_show_mean_spectrum.clicked.connect(self.show_mean_spectrum)
+        self.btn_show_mean_spectrum.clicked.connect(self.show_mean_spectrum)
+        
+        self.btn_reset_view.setEnabled(False)
+        self.btn_display_current_view.setEnabled(False)
+        self.btn_show_mean_spectrum.setEnabled(False)
         
         # Radiobuttons
         self.radio_btn_replace_layer = QRadioButton("Single panel_view")
@@ -125,8 +129,8 @@ class SelectionWindow(QWidget):
         
         visual_buttons = QWidget()
         visual_buttons.setLayout(QVBoxLayout())
-        visual_buttons.layout().addWidget(btn_reset_view)
-        visual_buttons.layout().addWidget(btn_display_current_view)
+        visual_buttons.layout().addWidget(self.btn_reset_view)
+        visual_buttons.layout().addWidget(self.btn_display_current_view)
         
         visual_frame.layout().addWidget(visual_buttons)
         
@@ -136,7 +140,7 @@ class SelectionWindow(QWidget):
         database_frame.setLayout(QHBoxLayout())
         database_frame.layout().addWidget(label_select_database)
         database_frame.layout().addWidget(btn_select_database)
-        database_frame.layout().addWidget(btn_show_mean_spectrum)
+        database_frame.layout().addWidget(self.btn_show_mean_spectrum)
         
         self.layout().addWidget(database_frame)
         
