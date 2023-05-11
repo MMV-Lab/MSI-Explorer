@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import (QHBoxLayout, QPushButton, QWidget, QComboBox, QLabel, QVBoxLayout,
-                            QScrollArea, QLineEdit, QFrame, QMessageBox)
+                            QScrollArea, QLineEdit, QFrame, QMessageBox, QApplication)
 from qtpy.QtCore import Qt
 
 if TYPE_CHECKING:
@@ -196,6 +196,7 @@ class ExampleQWidget(QWidget):
         Opens dialog for user to choose a file, passes data to selection_window
         """
         filepath = open_dialog(self, '*.imzML')
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         file_reader = napari_get_reader(filepath)
         import warnings
         try:
@@ -203,11 +204,13 @@ class ExampleQWidget(QWidget):
                 warnings.simplefilter("ignore")
                 self.ms_object = file_reader(filepath)
         except TypeError:
+            QApplication.restoreOverrideCursor()
             return
         except UnboundLocalError:
             msg = QMessageBox()
             msg.setWindowTitle("Error")
             msg.setText(".ibd file not found in same directory")
+            QApplication.restoreOverrideCursor()
             msg.exec()
             return
         
@@ -226,6 +229,7 @@ class ExampleQWidget(QWidget):
         self.selection_window.btn_reset_view.setEnabled(True)
         self.selection_window.btn_display_current_view.setEnabled(True)
         self.selection_window.btn_show_mean_spectrum.setEnabled(True)
+        QApplication.restoreOverrideCursor()
 
     def _analyze(self):
         """
