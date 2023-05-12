@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/napari-PLACEHOLDER.svg?color=green)](https://pypi.org/project/napari-PLACEHOLDER)
 [![Python Version](https://img.shields.io/pypi/pyversions/napari-PLACEHOLDER.svg?color=green)](https://python.org)
 [![tests](https://github.com/MMV-Lab/napari-PLACEHOLDER/workflows/tests/badge.svg)](https://github.com/MMV-Lab/napari-PLACEHOLDER/actions)
-[![codecov](https://codecov.io/gh/MMV-Lab/napari-PLACEHOLDER/branch/main/graph/badge.svg)](https://codecov.io/gh/MMV-Lab/napari-PLACEHOLDER)
+[![codecov](https://codecov.io/gh/MMV-Lab/napari-PLACEHOLDER/branch/main/graph/badge.svg?token=LR8CU032ZD)](https://codecov.io/gh/MMV-Lab/napari-PLACEHOLDER)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-PLACEHOLDER)](https://napari-hub.org/plugins/napari-PLACEHOLDER)
 
 A simple plugin to use with napari
