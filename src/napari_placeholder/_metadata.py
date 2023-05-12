@@ -22,15 +22,18 @@ class MetadataWindow(QWidget):
     check_for_empty_line()
         Checks if last line is empty
     """
-    def __init__(self, ms_object):
+    def __init__(self, ms_object, parent):
         """
         Parameters
         ----------
         ms_object
             The ms object holding the data from the ibd and imzml file
+        parent
+            The parent widget
         """
         super().__init__()
         self.setLayout(QVBoxLayout())
+        self.parent = parent
         
         ### QObjects
         # Label
@@ -47,8 +50,10 @@ class MetadataWindow(QWidget):
         
         # Buttons
         btn_export = QPushButton("Export")
+        btn_save = QPushButton("Save")
         
         btn_export.clicked.connect(self._export)
+        btn_save.clicked.connect(self._store_metadata)
         
         ### Organize objects via widgets
         self.data_frame = QFrame()
@@ -67,7 +72,10 @@ class MetadataWindow(QWidget):
         
         self.data_frame.layout().addWidget(header_frame)
         
-        metadata = ms_object.get_metadata()
+        if not hasattr(parent, "metadata"):
+            metadata = ms_object.get_metadata()
+        else:
+            metadata = parent.metadata
         
         for key in metadata:
             key_label = QLabel(key)
@@ -80,7 +88,8 @@ class MetadataWindow(QWidget):
             
             self.data_frame.layout().addWidget(frame)
         
-        self.layout().addWidget(self.data_frame)        
+        self.layout().addWidget(self.data_frame)
+        self.layout().addWidget(btn_save)
         self.layout().addWidget(btn_export)
         
         self._add_line()
@@ -114,6 +123,15 @@ class MetadataWindow(QWidget):
             value = line.itemAt(1).widget().text()
             metadata.append((key,value))
         return metadata
+    
+    def _store_metadata(self):
+        """
+        Writes metadata to the parent object to keep it persistent during the session
+        """
+        metadata = dict(self._compile_metadata())
+        # remove the "Key : Value" entry
+        del metadata[next(iter(metadata))]
+        self.parent.metadata = metadata
     
     def _add_line(self):
         """
