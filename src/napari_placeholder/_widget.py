@@ -219,7 +219,7 @@ class ExampleQWidget(QWidget):
         y = int(self.ms_object.get_metadata()['max count y'] / 2)
         index = self.ms_object.get_index(y, x)
         self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(index))
-        self.selection_window.update_plot(self.selection_window.data_array)
+        self.selection_window.update_plot(self.selection_window.data_array, position = "sample mean")
         self.selection_window.display_image_from_plot()
         
         # enable buttons after loading data
