@@ -8,10 +8,9 @@ numpy, matplotlib.pyplot, json, vaex, random, pyimzml.ImzMLParser
 Exports
 -------
 Maldi_MS
-
-Copyright © Peter Lampen, ISAS Dortmund, 2023
 """
 
+# Copyright © Peter Lampen, ISAS Dortmund, 2023
 # (07.02.2023)
 
 import numpy as np
@@ -34,6 +33,9 @@ class Maldi_MS():
         A list of lists containing two ndarrays: m/z and intensity
     _coordinates : list
         A list of tuples containing the coordinates (x, y, z)
+    -samplepoints : list
+        list of the indices of the spectra for the calculation of the mean
+        spectrum
     _metadata : dict
         A nested dictionary with the metadata of the measurement
     _num_spectra : int
@@ -67,6 +69,9 @@ class Maldi_MS():
         merge two Maldi-MS spectra together
     calc_mean_spec(n=1000)
         calculate a mean spectrum for n spectra
+    get_samplepoints(self)
+        get an image with the sample points for the calculation of the mean
+        spectrum
     """
 
 
@@ -87,8 +92,9 @@ class Maldi_MS():
             print('Error:', err)
 
         self._parser = p
-        self._spectra = list()
+        self._spectra = list()      # empty list
         self._coordinates = list()
+        self._samplepoints = list() # sample points for the mean spectrum
         for i, (x, y, z) in enumerate(p.coordinates):
             mz, intensities = p.getspectrum(i)
             self._spectra.append([mz, intensities])     # list of lists
@@ -470,6 +476,8 @@ class Maldi_MS():
             index = range(self._num_spectra)
             n = self._num_spectra
 
+        self._samplepoints = index      # save the sample points
+
         # calculate a factor for the intensities to set the total ion current
         # (tic) to np.median(tic)
         tic = self.get_tic()
@@ -503,3 +511,40 @@ class Maldi_MS():
         # print('run time:', stop - start, 'seconds')
 
         return spec
+
+
+    def get_samplepoints(self):
+        """
+        get an image with the sample points used for the calculation of the
+        mean spectrum
+
+        Returns
+        -------
+        numpy.ndarray
+            ndarray showing the position fo the sample points
+        """
+
+        # (09.05.2023)
+        # determine the size of the images from the metadata
+        try:
+            max_x = self._metadata['scan_settings']['scansettings1'] \
+                ['max count of pixels x']
+        except BaseException:
+            max_x = 0
+
+        try:
+            max_y = self._metadata['scan_settings']['scansettings1'] \
+                ['max count of pixels y']
+        except BaseException:
+            max_y = 0
+
+        # create the image of size max_y * max_x
+        # print('max_x =', max_x, 'max_y =', max_y)       # test output
+        image = np.zeros((max_y, max_x), dtype=np.int32)
+        # print('len_sp =', len(self._samplepoints))
+
+        for index in self._samplepoints:
+            (x, y, z) = self.get_coordinates(index)
+            image[y-1, x-1] = 1
+                
+        return image
