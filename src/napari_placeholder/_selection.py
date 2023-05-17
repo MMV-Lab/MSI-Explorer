@@ -118,6 +118,7 @@ class SelectionWindow(QWidget):
         
         # Comboboxes
         self.combobox_mz = QComboBox()
+        self.combobox_mz.setMinimumWidth(100)
         
         self.combobox_mz.currentTextChanged.connect(self.calculate_image)
         self.combobox_mz.currentTextChanged.connect(self.display_description)
