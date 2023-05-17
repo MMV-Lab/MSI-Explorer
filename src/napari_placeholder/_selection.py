@@ -118,6 +118,7 @@ class SelectionWindow(QWidget):
         
         # Comboboxes
         self.combobox_mz = QComboBox()
+        self.combobox_mz.setMinimumWidth(100)
         
         self.combobox_mz.currentTextChanged.connect(self.calculate_image)
         self.combobox_mz.currentTextChanged.connect(self.display_description)
@@ -176,12 +177,13 @@ class SelectionWindow(QWidget):
                 The Napari viewer instance
             """
             index = self.ms_object.get_index(
-                round(viewer.cursor.position[0]),round(viewer.cursor.position[1]))
-            #print(index)
+                round(viewer.cursor.position[0]),round(viewer.cursor.position[1])
+            )
+            position = (round(viewer.cursor.position[0]),round(viewer.cursor.position[1]))
             if index == -1:
                 return
             data = self.ms_object.get_spectrum(index)
-            self.update_plot(data)
+            self.update_plot(data, position)
         
     def keyPressEvent(self, event):
         """
@@ -196,15 +198,16 @@ class SelectionWindow(QWidget):
         """
         if event.text() == 's':
             index = self.ms_object.get_index(
-                round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1]))
-            #print(index)
+                round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1])
+            )
+            position = (round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1]))
             if index == -1:
                 return
             data = self.ms_object.get_spectrum(index)
-            self.update_plot(data)
+            self.update_plot(data, position)
         
     # creates plot from passed data
-    def plot(self, data = None):
+    def plot(self, data = None, position = None):
         """
         Creates a canvas for a given spectrum [data]
         
@@ -214,6 +217,8 @@ class SelectionWindow(QWidget):
         ----------
         data : list, optional
             The numpy arrays holding x and y coordinates (default is None)
+        position : tupple, optional
+            Position of the selected spectrum
             
         Returns
         -------
@@ -242,6 +247,7 @@ class SelectionWindow(QWidget):
             axes.plot()
         else:
             axes.plot(data[0],data[1])
+            axes.set_title(position)
             
         canvas = FigureCanvas(fig)
             
@@ -269,7 +275,7 @@ class SelectionWindow(QWidget):
         self.canvas = canvas
         return canvas
     
-    def update_plot(self, data):
+    def update_plot(self, data, position = None):
         """
         Replaces displayed canvas with new canvas created from [data]
         
@@ -277,9 +283,11 @@ class SelectionWindow(QWidget):
         ----------
         data : list
             The numpy arrays holding x and y coordinates
+        position : tuple, optional
+            Position of the selected spectrum
         """
         old_canvas = self.canvas
-        new_canvas = self.plot(data)
+        new_canvas = self.plot(data, position)
         self.layout().itemAt(0).widget().layout().replaceWidget(old_canvas, new_canvas)
         #self.layout().itemAt(0).widget().layout().removeWidget(old_canvas)
         old_canvas.hide()
@@ -407,7 +415,7 @@ class SelectionWindow(QWidget):
         """
         Displays the mean spectrum in the graph view
         """
-        self.update_plot(self.mean_spectrum)
+        self.update_plot(self.mean_spectrum, position = "sample mean")
 
     
 
