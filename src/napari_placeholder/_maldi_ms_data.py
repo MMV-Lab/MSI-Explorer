@@ -49,6 +49,8 @@ class Maldi_MS():
         check whether i is in the interval [0, _num_spectra-1]
     get_spectrum(i)
         get a list with m/z and intensity of spectrum[i]
+    get_all_spectra()
+        get a list with all spectra
     plot_spectrum(i)
         plot spectrum[i] with matplotlib.pyplot
     get_num_spec()
@@ -154,6 +156,23 @@ class Maldi_MS():
         return self._spectra[i]
 
 
+    def get_all_spectra(self):
+        """
+        get a list with all spectra
+
+        Parameter
+        ---------
+
+        Returns
+        -------
+        list
+            A list of lists
+        """
+
+        # (17.05.2023)
+        return self._spectra
+
+
     def plot_spectrum(self, i):
         """
         plot spectrum[i] with matplotlib.pyplot
@@ -165,9 +184,9 @@ class Maldi_MS():
         """
 
         i = self.check_i(i)
-        spec = self._spectra[i]
-        mz = spec[0]
-        intensities = spec[1]
+        spectrum = self._spectra[i]
+        mz = spectrum[0]
+        intensities = spectrum[1]
         plt.plot(mz, intensities)
         plt.xlabel('m/z')
         plt.ylabel('intensity')
@@ -270,8 +289,8 @@ class Maldi_MS():
         n = self._num_spectra
         tic = np.zeros(n)
 
-        for i, spec in enumerate(self._spectra):
-            tic[i] = spec[1].sum()
+        for i, spectrum in enumerate(self._spectra):
+            tic[i] = spectrum[1].sum()
 
         return tic
 
@@ -439,11 +458,11 @@ class Maldi_MS():
             if (i == n) and (j == m):           # ready
                 break
             elif i == n:                        # end of the 1st spectrum
-                x3 = np.append(x3, x2[j:m])     # the rest of the 2nd spec.
+                x3 = np.append(x3, x2[j:m])     # the rest of the 2nd spectrum
                 y3 = np.append(y3, y2[j:m])
                 break
             elif j == m:                        # end of the 2nd spectrum
-                x3 = np.append(x3, x1[i:n])     # the rest of the 1st spec.
+                x3 = np.append(x3, x1[i:n])     # the rest of the 1st spectrum
                 y3 = np.append(y3, y1[i:n])
                 break
 
@@ -457,7 +476,7 @@ class Maldi_MS():
         Parameters
         ----------
         n : int
-            number of spectra, used to calculate a mean spec
+            number of spectra, used to calculate a mean spectrum
 
         Returns
         -------
@@ -469,32 +488,33 @@ class Maldi_MS():
         # start = time.process_time()   # to stop the run time
 
         # choose n random spectra from 0 to _num_spectra - 1
+        index = range(self._num_spectra)
+
         if n < self._num_spectra:
-            index = range(self._num_spectra)
             index = random.sample(index, n)
         else:
-            index = range(self._num_spectra)
             n = self._num_spectra
 
         self._samplepoints = index      # save the sample points
 
+        """
         # calculate a factor for the intensities to set the total ion current
         # (tic) to np.median(tic)
         tic = self.get_tic()
         median = np.median(tic)
         quotient = tic / median
         factor = np.reciprocal(quotient)
+        """
 
-        # start with the first spectrum
-        idx = index[0]
-        spec = self._spectra[idx]
-        intens = spec[1] * factor[idx]
-        df = vaex.from_arrays(x=spec[0], y=intens)  # build a Vaex DataFrame
+        i = index[0]                    # start with the first spectrum
+        spectrum = self._spectra[i]
+        # intens = spectrum[1] * factor[i]
+        df = vaex.from_arrays(x=spectrum[0], y=spectrum[1]) # vaex DataFrame
 
-        for idx in index[1:]:           # concatenate the other spectra
-            spec = self._spectra[idx]
-            intens = spec[1] * factor[idx]
-            df1 = vaex.from_arrays(x=spec[0], y=intens)
+        for i in index[1:]:             # concatenate the other spectra
+            spectrum = self._spectra[i]
+            # intens = spectrum[1] * factor[i]
+            df1 = vaex.from_arrays(x=spectrum[0], y=spectrum[1])
             df = df.concat(df1)         # connect two DataFrames
 
         df['x'] = df.x.round(3)         # round m/z to 3 decimal places
@@ -503,14 +523,14 @@ class Maldi_MS():
 
         mz = df.x.values.to_numpy()     # convert the DataFrame to NumPy ndarray
         intens = df.y_sum.values
-        spec = (mz, intens)
+        spectrum = (mz, intens)
 
         # stop = time.process_time()
         # print('count =', df.count())  # test output
         # print('m/z =', df.min(df.x), '-', df.max(df.x))
         # print('run time:', stop - start, 'seconds')
 
-        return spec
+        return spectrum
 
 
     def get_samplepoints(self):
