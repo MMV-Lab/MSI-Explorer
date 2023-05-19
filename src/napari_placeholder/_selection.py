@@ -63,7 +63,7 @@ class SelectionWindow(QWidget):
         Filters metabolites by text in lineedit_mz_filter
     display_image_from_plot()
         Displays image of the currently displayed m/z range in the plot
-    show_mean_spectrum()
+    sample_mean_spectrum()
         Displays the mean spectrum in the graph view
     """
     def __init__(self, viewer):
@@ -93,16 +93,17 @@ class SelectionWindow(QWidget):
         self.btn_reset_view = QPushButton("Reset")
         self.btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
-        self.btn_show_mean_spectrum = QPushButton("Show mean spectrum") # TODO: disable until mean spec is calculated
+        self.btn_sample_mean_spectrum = QPushButton("Show mean spectrum")
+        self.btn_true_mean_spectrum
         
         self.btn_reset_view.clicked.connect(self.reset_plot)
         self.btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
-        self.btn_show_mean_spectrum.clicked.connect(self.show_mean_spectrum)
+        self.btn_sample_mean_spectrum.clicked.connect(self.sample_mean_spectrum)
         
         self.btn_reset_view.setEnabled(False)
         self.btn_display_current_view.setEnabled(False)
-        self.btn_show_mean_spectrum.setEnabled(False)
+        self.btn_sample_mean_spectrum.setEnabled(False)
         
         # Radiobuttons
         self.radio_btn_replace_layer = QRadioButton("Single panel_view")
@@ -140,7 +141,7 @@ class SelectionWindow(QWidget):
         database_frame.setLayout(QHBoxLayout())
         database_frame.layout().addWidget(label_select_database)
         database_frame.layout().addWidget(btn_select_database)
-        database_frame.layout().addWidget(self.btn_show_mean_spectrum)
+        database_frame.layout().addWidget(self.btn_sample_mean_spectrum)
         
         self.layout().addWidget(database_frame)
         
@@ -410,11 +411,17 @@ class SelectionWindow(QWidget):
         mz = (self.displayed_data[0,0] + self.displayed_data[-1,0]) / 2
         self.calculate_image(mz, tolerance)
             
-    def show_mean_spectrum(self):
+    def sample_mean_spectrum(self):
         """
-        Displays the mean spectrum in the graph view
+        Displays the sample mean spectrum in the graph view
         """
         self.update_plot(self.mean_spectrum, position = "sample mean")
+        
+    def true_mean_spectrum(self):
+        """
+        Displays the true mean spectrum in the graph view
+        """
+        self.update_plot(0, position = "true mean")
 
     
 
