@@ -7,6 +7,7 @@ import numpy as np
 
 from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
+from ._true_mean_spec import get_true_mean_spec
 
 class SelectionWindow(QWidget):
     """
@@ -36,7 +37,7 @@ class SelectionWindow(QWidget):
         array holding X and Y coordinates of the current spectrum
     displayed_data : array
         array holding X and Y coordinates of the currently displayed part of the current spectrum
-    mean_spectrum : tuple
+    sample_mean_spectrum : tuple
         tuple holding numpy arrays with X and Y coordinates of the mean spectrum
     
     Methods
@@ -93,17 +94,23 @@ class SelectionWindow(QWidget):
         self.btn_reset_view = QPushButton("Reset")
         self.btn_display_current_view = QPushButton("Show image")
         btn_select_database = QPushButton("Select")
-        self.btn_sample_mean_spectrum = QPushButton("Show mean spectrum")
-        self.btn_true_mean_spectrum
+        self.btn_sample_mean_spectrum = QPushButton("Show sample mean spectrum")
+        self.btn_true_mean_spectrum = QPushButton("Show true mean spectrum")
+        
+        self.btn_true_mean_spectrum.setToolTip(
+            "WARNING: This will probably take a while the first time you run it!"
+        )
         
         self.btn_reset_view.clicked.connect(self.reset_plot)
         self.btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
         self.btn_sample_mean_spectrum.clicked.connect(self.sample_mean_spectrum)
+        self.btn_true_mean_spectrum.clicked.connect(self.calculate_true_mean_spectrum)
         
         self.btn_reset_view.setEnabled(False)
         self.btn_display_current_view.setEnabled(False)
         self.btn_sample_mean_spectrum.setEnabled(False)
+        self.btn_true_mean_spectrum.setEnabled(False)
         
         # Radiobuttons
         self.radio_btn_replace_layer = QRadioButton("Single panel_view")
@@ -143,6 +150,7 @@ class SelectionWindow(QWidget):
         database_frame.layout().addWidget(label_select_database)
         database_frame.layout().addWidget(btn_select_database)
         database_frame.layout().addWidget(self.btn_sample_mean_spectrum)
+        database_frame.layout().addWidget(self.btn_true_mean_spectrum)
         
         self.layout().addWidget(database_frame)
         
@@ -180,7 +188,8 @@ class SelectionWindow(QWidget):
             index = self.ms_object.get_index(
                 round(viewer.cursor.position[0]),round(viewer.cursor.position[1])
             )
-            position = (round(viewer.cursor.position[0]),round(viewer.cursor.position[1]))
+            position = "{}, #{}".format((round(viewer.cursor.position[0]),round(viewer.cursor.position[1])),
+                                        self.ms_object.get_index(round(viewer.cursor.position[0]), round(viewer.cursor.position[1])))
             if index == -1:
                 return
             data = self.ms_object.get_spectrum(index)
@@ -353,7 +362,7 @@ class SelectionWindow(QWidget):
         self.ms_object = ms_data
         self.data_array = np.array(data)
         self.displayed_data = self.data_array
-        self.mean_spectrum = self.ms_object.calc_mean_spec() # TODO: put in separate thread
+        self.sample_mean_spectrum = self.ms_object.calc_mean_spec() # TODO: put in separate thread
         
     def update_mzs(self):
         """
@@ -416,13 +425,34 @@ class SelectionWindow(QWidget):
         """
         Displays the sample mean spectrum in the graph view
         """
-        self.update_plot(self.mean_spectrum, position = "sample mean")
+        self.update_plot(self.sample_mean_spectrum, position = "sample mean")
         
-    def true_mean_spectrum(self):
+        if not "sample points" in self.viewer.layers:
+            self.viewer.add_labels(self.ms_object.get_samplepoints(), name = "sample points")
+        
+    def calculate_true_mean_spectrum(self):
         """
-        Displays the true mean spectrum in the graph view
+        Calculates the true mean spectrum if necessary, then calls for the spectrum to be displayed
         """
-        self.update_plot(0, position = "true mean")
+        if not hasattr(self, 'true_mean_spectrum'):
+            print('its doing it!')
+            worker = get_true_mean_spec(self.ms_object)
+            worker.returned.connect(self.display_true_mean_spectrum)
+            worker.start()
+        else:
+            self.update_plot(self.true_mean_spectrum, position = "true mean")
+        
+    def display_true_mean_spectrum(self, spectrum):
+        """
+        Displays the true mean spectrum and writes it to variable
+        
+        Parameters
+        ----------
+        spectrum : list
+            true mean spectrum
+        """
+        self.true_mean_spectrum = spectrum
+        self.update_plot(spectrum, position = "true mean")
 
     
 

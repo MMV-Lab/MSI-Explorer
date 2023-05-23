@@ -219,7 +219,7 @@ class ExampleQWidget(QWidget):
         y = int(self.ms_object.get_metadata()['max count y'] / 2)
         index = self.ms_object.get_index(y, x)
         self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(index))
-        self.selection_window.update_plot(self.selection_window.data_array, position = "sample mean")
+        self.selection_window.update_plot(self.selection_window.data_array, position = (x,y))
         self.selection_window.display_image_from_plot()
         
         # enable buttons after loading data
@@ -228,7 +228,8 @@ class ExampleQWidget(QWidget):
         self.btn_analyze_roi.setEnabled(True)
         self.selection_window.btn_reset_view.setEnabled(True)
         self.selection_window.btn_display_current_view.setEnabled(True)
-        self.selection_window.btn_show_mean_spectrum.setEnabled(True)
+        self.selection_window.btn_sample_mean_spectrum.setEnabled(True)
+        self.selection_window.btn_true_mean_spectrum.setEnabled(True)
         QApplication.restoreOverrideCursor()
 
     def _analyze(self):
