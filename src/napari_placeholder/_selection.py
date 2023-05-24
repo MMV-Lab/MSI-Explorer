@@ -434,6 +434,7 @@ class SelectionWindow(QWidget):
         """
         Calculates the true mean spectrum if necessary, then calls for the spectrum to be displayed
         """
+    
         if not hasattr(self, 'true_mean_spectrum'):
             print('its doing it!')
             worker = get_true_mean_spec(self.ms_object)

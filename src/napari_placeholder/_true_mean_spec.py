@@ -38,7 +38,6 @@ def mean_spec1(spectra):
     print("length PID {}: {}".format(os.getpid(), len(spectra[1:])))
     i = 1
     for spectrum in spectra[1:]:    # concatenate the other spectra
-        print("process {} iteration {}".format(os.getpid(), i))
         df1 = vaex.from_arrays(x=spectrum[0], y=spectrum[1])
         df = df.concat(df1)         # connect two DataFrames
         i += 1
@@ -115,7 +114,7 @@ def get_true_mean_spec(maldi_ms):
 
     print("starting {} processes with {} max concurrent".format(k, AMOUNT_OF_PROCESSES))
     with Pool(AMOUNT_OF_PROCESSES) as p:
-        iterator = p.map(mean_spec1, spectra2)
+        iterator = p.map(mean_spec1, spectra2[0:1])
     print("processes completed")
     list1 = list(iterator)
 
