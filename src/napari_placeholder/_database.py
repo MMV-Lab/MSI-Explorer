@@ -39,7 +39,7 @@ class DatabaseWindow(QWidget):
         self.setLayout(QVBoxLayout())
         
         self.parent = parent
-        self.db_directory = "src/napari_placeholder/databases/"
+        self.db_directory = os.path.dirname(__file__) + "/databases/"
         
         ### QObjects
         # Label
