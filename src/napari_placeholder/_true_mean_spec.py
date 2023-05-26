@@ -114,7 +114,7 @@ def get_true_mean_spec(maldi_ms):
 
     print("starting {} processes with {} max concurrent".format(k, AMOUNT_OF_PROCESSES))
     with Pool(AMOUNT_OF_PROCESSES) as p:
-        iterator = p.map(mean_spec1, spectra2[0:1])
+        iterator = p.map(mean_spec1, spectra2)
     print("processes completed")
     list1 = list(iterator)
 
