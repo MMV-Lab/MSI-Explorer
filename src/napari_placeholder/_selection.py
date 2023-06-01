@@ -1,5 +1,5 @@
 from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QRadioButton,
-                            QComboBox, QLineEdit)
+                            QComboBox, QLineEdit, QSizePolicy, QVBoxLayout, QGridLayout)
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -84,42 +84,70 @@ class SelectionWindow(QWidget):
         ### QObjects
         
         # Labels
+        label_mean = QLabel("Mean")
+        label_mean.setMaximumWidth(80)
         label_select_database = QLabel("Select database")
-        label_mz = QLabel("m/z")
-        label_range = QLabel("Range:")
-        label_mode = QLabel("Mode")
+        label_select_database.setMaximumWidth(180)
+        label_search = QLabel("Search")
+        label_search.setMaximumWidth(80)
+        label_mz = QLabel("Molecule")
+        label_mz.setMaximumWidth(100)
+        label_range = QLabel("Range")
+        label_range.setMaximumWidth(80)
+        label_mode = QLabel("Display Mode")
+        label_mode.setMaximumWidth(160)
+        
         self.label_mz_annotation = QLabel("Annotation")
+        self.label_mz_annotation.setMinimumWidth(200)
+        self.label_mz_annotation.setMaximumWidth(600)
         
         # Buttons
         self.btn_reset_view = QPushButton("Reset")
+        self.btn_reset_view.setMaximumWidth(80)
         self.btn_display_current_view = QPushButton("Show image")
+        self.btn_display_current_view.setMaximumWidth(120)
+        self.btn_export_spectrum_data = QPushButton("Export spectrum data")
+        self.btn_export_spectrum_data.setMaximumWidth(180)
+        self.btn_export_spectrum_plot = QPushButton("Export spectrum plot")
+        self.btn_export_spectrum_plot.setMaximumWidth(180)
         btn_select_database = QPushButton("Select")
-        self.btn_sample_mean_spectrum = QPushButton("Show sample mean spectrum")
+        btn_select_database.setMaximumWidth(80)
+        self.btn_pseudo_mean_spectrum = QPushButton("Show pseudo mean spectrum")
+        self.btn_pseudo_mean_spectrum.setMaximumWidth(220)
         self.btn_true_mean_spectrum = QPushButton("Show true mean spectrum")
+        self.btn_true_mean_spectrum.setMaximumWidth(200)
         
         self.btn_true_mean_spectrum.setToolTip(
-            "WARNING: This will probably take a while the first time you run it!"
+            "WARNING: This will most likely take a while the first time you run it!"
         )
         
         self.btn_reset_view.clicked.connect(self.reset_plot)
         self.btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
-        self.btn_sample_mean_spectrum.clicked.connect(self.sample_mean_spectrum)
+        self.btn_pseudo_mean_spectrum.clicked.connect(self.sample_mean_spectrum)
         self.btn_true_mean_spectrum.clicked.connect(self.calculate_true_mean_spectrum)
+        self.btn_export_spectrum_data.clicked.connect(self.export_spectrum_data)
+        self.btn_export_spectrum_plot.clicked.connect(self.export_spectrum_plot)
         
         self.btn_reset_view.setEnabled(False)
         self.btn_display_current_view.setEnabled(False)
-        self.btn_sample_mean_spectrum.setEnabled(False)
+        self.btn_pseudo_mean_spectrum.setEnabled(False)
         self.btn_true_mean_spectrum.setEnabled(False)
+        self.btn_export_spectrum_data.setEnabled(False)
+        self.btn_export_spectrum_plot.setEnabled(False)
         
         # Radiobuttons
         self.radio_btn_replace_layer = QRadioButton("Single panel_view")
+        self.radio_btn_replace_layer.setMaximumWidth(180)
         radio_btn_add_layer = QRadioButton("Multi")
+        radio_btn_add_layer.setMaximumWidth(80)
         self.radio_btn_replace_layer.toggle()
         
         # Lineedits
         self.lineedit_mz_range = QLineEdit("0.1")
+        self.lineedit_mz_range.setMaximumWidth(100)
         self.lineedit_mz_filter = QLineEdit()
+        self.lineedit_mz_filter.setMaximumWidth(400)
         self.lineedit_mz_filter.setPlaceholderText("Filter")
         
         self.lineedit_mz_filter.editingFinished.connect(self.filter_mzs)
@@ -127,43 +155,75 @@ class SelectionWindow(QWidget):
         # Comboboxes
         self.combobox_mz = QComboBox()
         self.combobox_mz.setMinimumWidth(100)
+        self.combobox_mz.setMaximumWidth(200)
         
         self.combobox_mz.currentTextChanged.connect(self.calculate_image)
         self.combobox_mz.currentTextChanged.connect(self.display_description)
         
+        # Lines
+        line_1 = QWidget()
+        line_1.setFixedHeight(4)
+        line_1.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
+        line_1.setStyleSheet("background-color: #c0c0c0")
+        
+        line_2 = QWidget()
+        line_2.setFixedHeight(4)
+        line_2.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
+        line_2.setStyleSheet("background-color: #c0c0c0")
+        
+        line_3 = QWidget()
+        line_3.setFixedHeight(4)
+        line_3.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
+        line_3.setStyleSheet("background-color: #c0c0c0")
+        
+        line_4 = QWidget()
+        line_4.setFixedHeight(4)
+        line_4.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Fixed)
+        line_4.setStyleSheet("background-color: #c0c0c0")
+        
         ### Organize objects via widgets
-        visual_frame = QWidget()
-        visual_frame.setLayout(QHBoxLayout())  
-        visual_frame.layout().addWidget(self.canvas)
+        
+        self.layout().addWidget(self.canvas)
         
         visual_buttons = QWidget()
-        visual_buttons.setLayout(QVBoxLayout())
-        visual_buttons.layout().addWidget(self.btn_reset_view)
+        visual_buttons.setLayout(QHBoxLayout())
         visual_buttons.layout().addWidget(self.btn_display_current_view)
+        visual_buttons.layout().addWidget(self.btn_reset_view)
+        visual_buttons.layout().addWidget(self.btn_export_spectrum_data)
+        visual_buttons.layout().addWidget(self.btn_export_spectrum_plot)
         
-        visual_frame.layout().addWidget(visual_buttons)
+        self.layout().addWidget(visual_buttons)
+        self.layout().addWidget(line_1)
         
-        self.layout().addWidget(visual_frame)
+        mean_frame = QWidget()
+        mean_frame.setLayout(QHBoxLayout())
+        mean_frame.layout().addWidget(label_mean)
+        mean_frame.layout().addWidget(self.btn_true_mean_spectrum)
+        mean_frame.layout().addWidget(self.btn_pseudo_mean_spectrum)
+        
+        self.layout().addWidget(mean_frame)
+        self.layout().addWidget(line_2)
         
         database_frame = QWidget()
         database_frame.setLayout(QHBoxLayout())
         database_frame.layout().addWidget(label_select_database)
         database_frame.layout().addWidget(btn_select_database)
-        database_frame.layout().addWidget(self.btn_sample_mean_spectrum)
-        database_frame.layout().addWidget(self.btn_true_mean_spectrum)
         
         self.layout().addWidget(database_frame)
+        self.layout().addWidget(line_3)
         
         mz_frame = QWidget()
-        mz_frame.setLayout(QHBoxLayout())
-        mz_frame.layout().addWidget(label_mz)
-        mz_frame.layout().addWidget(self.lineedit_mz_filter)
-        mz_frame.layout().addWidget(self.combobox_mz)
-        mz_frame.layout().addWidget(self.label_mz_annotation)
-        mz_frame.layout().addWidget(label_range)
-        mz_frame.layout().addWidget(self.lineedit_mz_range)
+        mz_frame.setLayout(QGridLayout())
+        mz_frame.layout().addWidget(label_search, 0, 0)
+        mz_frame.layout().addWidget(label_mz,1,0)
+        mz_frame.layout().addWidget(self.lineedit_mz_filter,1,1)
+        mz_frame.layout().addWidget(self.combobox_mz,2,1)
+        mz_frame.layout().addWidget(self.label_mz_annotation,2,2,)
+        mz_frame.layout().addWidget(label_range,1,3)
+        mz_frame.layout().addWidget(self.lineedit_mz_range,2,3)
         
         self.layout().addWidget(mz_frame)
+        self.layout().addWidget(line_4)
         
         display_mode_frame = QWidget()
         display_mode_frame.setLayout(QHBoxLayout())
@@ -210,7 +270,8 @@ class SelectionWindow(QWidget):
             index = self.ms_object.get_index(
                 round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1])
             )
-            position = (round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1]))
+            position = "{}, #{}".format((round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1])),
+                                        self.ms_object.get_index(round(self.viewer.cursor.position[0]), round(self.viewer.cursor.position[1])))
             if index == -1:
                 return
             data = self.ms_object.get_spectrum(index)
@@ -298,7 +359,7 @@ class SelectionWindow(QWidget):
         """
         old_canvas = self.canvas
         new_canvas = self.plot(data, position)
-        self.layout().itemAt(0).widget().layout().replaceWidget(old_canvas, new_canvas)
+        self.layout().replaceWidget(old_canvas, new_canvas)
         #self.layout().itemAt(0).widget().layout().removeWidget(old_canvas)
         old_canvas.hide()
         #self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
@@ -454,6 +515,18 @@ class SelectionWindow(QWidget):
         """
         self.true_mean_spectrum = spectrum
         self.update_plot(spectrum, position = "true mean")
+        
+    def export_spectrum_data(self):
+        """
+        Exports the current spectrum data to csv
+        """
+        pass
+    
+    def export_spectrum_plot(self):
+        """
+        Exports the current spectrum as [insert file format here]
+        """
+        pass
 
     
 
