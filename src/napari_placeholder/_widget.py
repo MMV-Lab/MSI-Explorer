@@ -228,7 +228,7 @@ class ExampleQWidget(QWidget):
         self.btn_analyze_roi.setEnabled(True)
         self.selection_window.btn_reset_view.setEnabled(True)
         self.selection_window.btn_display_current_view.setEnabled(True)
-        self.selection_window.btn_sample_mean_spectrum.setEnabled(True)
+        self.selection_window.btn_pseudo_mean_spectrum.setEnabled(True)
         self.selection_window.btn_true_mean_spectrum.setEnabled(True)
         QApplication.restoreOverrideCursor()
 
