@@ -8,6 +8,7 @@ import numpy as np
 from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
 from ._true_mean_spec import get_true_mean_spec
+from ._writer import save_dialog
 
 class SelectionWindow(QWidget):
     """
@@ -520,12 +521,31 @@ class SelectionWindow(QWidget):
         """
         Exports the current spectrum data to csv
         """
-        pass
+        import csv
+        
+        """dialog = QFileDialog()
+        file = dialog.getSaveFileName(filter = "*.csv")"""
+        file = save_dialog(self, "*.csv")
+        if file[0] == "":
+            # No file path + name chosen
+            return
+        
+        csvfile = open(file[0], 'w', newline='')
+        writer = csv.writer(csvfile)
+        writer.writerow(["m/z","intensity"])
+        
+        for i in range(len(self.displayed_data[0])):
+            data = [self.displayed_data[0,i]]
+            data.append(self.displayed_data[1,i])
+            writer.writerow(data)
+        csvfile.close()
+        
     
     def export_spectrum_plot(self):
         """
         Exports the current spectrum as [insert file format here]
         """
+        print("dummy for later")
         pass
 
     
