@@ -49,6 +49,6 @@ def get_true_mean_spec(maldi_ms):
     print('count = %d' % (df.count()))
     print('m/z = %.3f - %.3f' % (df.min(df.mz), df.max(df.mz)))
     print('intensity = %.1f - %9.4g' % (df.min(df.intens_sum), df.max(df.intens_sum)))
-
+    
     QApplication.restoreOverrideCursor()
     return result
