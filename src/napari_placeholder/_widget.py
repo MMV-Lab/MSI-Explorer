@@ -230,6 +230,8 @@ class ExampleQWidget(QWidget):
         self.selection_window.btn_display_current_view.setEnabled(True)
         self.selection_window.btn_pseudo_mean_spectrum.setEnabled(True)
         self.selection_window.btn_true_mean_spectrum.setEnabled(True)
+        self.selection_window.btn_export_spectrum_data.setEnabled(True)
+        self.selection_window.btn_export_spectrum_plot.setEnabled(True)
         QApplication.restoreOverrideCursor()
 
     def _analyze(self):
