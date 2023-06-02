@@ -30,7 +30,6 @@ def get_true_mean_spec(maldi_ms):
     
     start_time = time.time()        # start time
     QApplication.setOverrideCursor(Qt.WaitCursor)
-    print("starting worker")
 
     spectra = maldi_ms.get_all_spectra()
     spectra_df = [ vaex.from_arrays(mz=spectrum[0], intens=spectrum[1]) \
@@ -45,12 +44,11 @@ def get_true_mean_spec(maldi_ms):
     intens = df.intens_sum.values
     result = [mz, intens]
 
-    print("worker is done")
     stop_time = time.time()
-    print('run time:', stop_time - start_time, 'seconds')
-    print('count =', df.count())
-    print('m/z =', df.min(df.mz), '-', df.max(df.mz))
-    print('intensity =', df.min(df.intens_sum), '-', df.max(df.intens_sum))
-
+    print('run time: %.2f seconds' % (stop_time - start_time))
+    print('count = %d' % (df.count()))
+    print('m/z = %.3f - %.3f' % (df.min(df.mz), df.max(df.mz)))
+    print('intensity = %.1f - %9.4g' % (df.min(df.intens_sum), df.max(df.intens_sum)))
+    
     QApplication.restoreOverrideCursor()
     return result
