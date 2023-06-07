@@ -515,6 +515,8 @@ class SelectionWindow(QWidget):
             true mean spectrum
         """
         self.true_mean_spectrum = spectrum
+        self.data_array = np.array(spectrum)
+        self.displayed_data = self.data_array
         self.update_plot(spectrum, position = "true mean")
         
     def export_spectrum_data(self):
