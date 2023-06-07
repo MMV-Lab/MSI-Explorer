@@ -424,7 +424,7 @@ class SelectionWindow(QWidget):
         self.ms_object = ms_data
         self.data_array = np.array(data)
         self.displayed_data = self.data_array
-        self.sample_mean_spectrum = self.ms_object.calc_mean_spec() # TODO: put in separate thread
+        self.sample_mean_spectrum = self.ms_object.pseudo_mean_spec() # TODO: put in separate thread
         
     def update_mzs(self):
         """
