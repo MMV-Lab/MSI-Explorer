@@ -339,7 +339,6 @@ class SelectionWindow(QWidget):
                 
             min_bound = self.data_array[:,self.data_array[0,:] >= min]
             both_bound = min_bound[:,min_bound[0,:] <= max]
-            self.displayed_data = both_bound
             self.update_plot(both_bound)
     
         from matplotlib.widgets import SpanSelector
@@ -358,6 +357,7 @@ class SelectionWindow(QWidget):
         position : tuple, optional
             Position of the selected spectrum
         """
+        self.displayed_data = np.array(data)
         old_canvas = self.canvas
         new_canvas = self.plot(data, position)
         self.layout().replaceWidget(old_canvas, new_canvas)
@@ -369,7 +369,6 @@ class SelectionWindow(QWidget):
         """
         Replaces canvas with fully zoomed out canvas
         """
-        self.displayed_data = self.data_array
         self.update_plot(self.data_array)
         
     def select_database(self):
