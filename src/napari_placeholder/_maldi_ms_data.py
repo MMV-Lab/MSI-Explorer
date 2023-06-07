@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 import vaex
-# import time
+import time
 import random
 from pyimzml.ImzMLParser import ImzMLParser, getionimage
 
@@ -69,7 +69,7 @@ class Maldi_MS():
         get a dictionary with selected metadata
     merge_two_spectra(spectrum1, ,spectrum2)
         merge two Maldi-MS spectra together
-    calc_mean_spec(n=1000)
+    pseudo_mean_spec(n=1000)
         calculate a mean spectrum for n spectra
     get_samplepoints(self)
         get an image with the sample points for the calculation of the mean
@@ -412,123 +412,52 @@ class Maldi_MS():
         return d
 
 
-    def merge_two_spectra(self, spectrum1, spectrum2):
+    def pseudo_mean_spec(self, n=1000):
         """
-        merge two Maldi-MS spectra together
-
-        Parameters
-        ----------
-        spectrum1 : list
-        spectrum2 : list
-            two sapectra from _spectra in the format [mz, intensity]
-
-        Returns
-        -------
-        list
-            a list with the merged spectrum: [mz, intensity]
-        """
-
-        # Build a new mass spectrum from spectra 1 and 2 (14.02.2023)
-
-        x1 = spectrum1[0]       # m/z values of the 1st spectrum
-        y1 = spectrum1[1]       # intensities of the 1st spectrum
-        x2 = spectrum2[0]
-        y2 = spectrum2[1]
-        x3 = np.array([])
-        y3 = np.array([])
-        n = len(x1)             # number of data points of the 1st spectrum
-        m = len(x2)
-        i, j = 0, 0
-
-        while True:                     # infinite loop
-            if x1[i] < x2[j]:           # start with the 1st spectrum
-                x3 = np.append(x3, x1[i])
-                y3 = np.append(y3, y1[i])
-                i += 1
-            elif x1[i] > x2[j]:         # start with the 2nd spectrum
-                x3 = np.append(x3, x2[j])
-                y3 = np.append(y3, y2[j])
-                j += 1
-            else:                       # add the intensities of both spectra
-                x3 = np.append(x3, x1[i])
-                y3 = np.append(y3, y1[i] + y2[j])
-                i += 1
-                j += 1
-
-            if (i == n) and (j == m):           # ready
-                break
-            elif i == n:                        # end of the 1st spectrum
-                x3 = np.append(x3, x2[j:m])     # the rest of the 2nd spectrum
-                y3 = np.append(y3, y2[j:m])
-                break
-            elif j == m:                        # end of the 2nd spectrum
-                x3 = np.append(x3, x1[i:n])     # the rest of the 1st spectrum
-                y3 = np.append(y3, y1[i:n])
-                break
-
-        return [x3, y3]
-
-
-    def calc_mean_spec(self, n=1000):
-        """
-        calculate a mean spectrum for n spectra
+        calculate a pseudo mean spectrum from n random spectra
 
         Parameters
         ----------
         n : int
-            number of spectra, used to calculate a mean spectrum
+            number of spectra, used to calculate a pseudo mean spectrum
 
         Returns
         -------
         list
-            the mean spectrum in the format [mz, intensity]
+            the pseudo mean spectrum in the format [mz, intensity]
         """
 
-        # (02.03.2023)
-        # start = time.process_time()   # to stop the run time
+        # (02.03.2023, geändert: 06.06.2023)
+        start_time = time.time()       # start time
 
         # choose n random spectra from 0 to _num_spectra - 1
-        index = range(self._num_spectra)
-
         if n < self._num_spectra:
+            index = range(self._num_spectra)
             index = random.sample(index, n)
+            index.sort()
         else:
-            n = self._num_spectra
+            index = range(self._num_spectra)
 
         self._samplepoints = index      # save the sample points
 
-        """
-        # calculate a factor for the intensities to set the total ion current
-        # (tic) to np.median(tic)
-        tic = self.get_tic()
-        median = np.median(tic)
-        quotient = tic / median
-        factor = np.reciprocal(quotient)
-        """
+        spectra = self._spectra
+        spectra_df = [ vaex.from_arrays(mz=spectra[i][0], intens=spectra[i][1]) \
+            for i in index ]                # convert all spectra to a DataFrame
+        df = vaex.concat(spectra_df)        # build one big DataFrame
 
-        i = index[0]                    # start with the first spectrum
-        spectrum = self._spectra[i]
-        # intens = spectrum[1] * factor[i]
-        df = vaex.from_arrays(x=spectrum[0], y=spectrum[1]) # vaex DataFrame
-
-        for i in index[1:]:             # concatenate the other spectra
-            spectrum = self._spectra[i]
-            # intens = spectrum[1] * factor[i]
-            df1 = vaex.from_arrays(x=spectrum[0], y=spectrum[1])
-            df = df.concat(df1)         # connect two DataFrames
-
-        df['x'] = df.x.round(3)         # round m/z to 3 decimal places
-        df = df.groupby(df.x, agg='sum', sort=True)
+        df['mz'] = df.mz.round(3)           # round m/z to 3 decimal places
         # add up the intensities for equal m/z values
+        df = df.groupby(df.mz, agg='sum', sort=True)
 
-        mz = df.x.values.to_numpy()     # convert the DataFrame to NumPy ndarray
-        intens = df.y_sum.values
+        mz = df.mz.values.to_numpy()        # convert the df to NumPy ndarray
+        intens = df.intens_sum.values
         spectrum = (mz, intens)
 
-        # stop = time.process_time()
-        # print('count =', df.count())  # test output
-        # print('m/z =', df.min(df.x), '-', df.max(df.x))
-        # print('run time:', stop - start, 'seconds')
+        stop_time = time.time()
+        print('run time: %.2f seconds' % (stop_time - start_time))
+        print('count = %d' % (df.count()))
+        print('m/z = %.3f - %.3f' % (df.min(df.mz), df.max(df.mz)))
+        print('intensity = %.1f - %9.4g' % (df.min(df.intens_sum), df.max(df.intens_sum)))
 
         return spectrum
 
