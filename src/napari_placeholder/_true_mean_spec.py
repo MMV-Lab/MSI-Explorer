@@ -36,7 +36,7 @@ def get_true_mean_spec(maldi_ms):
         for spectrum in spectra ]   # convert all spectra to vaex DataFrames
     df = vaex.concat(spectra_df)    # build one big DataFrame from all spectra
 
-    df['mz'] = df.mz.round(3)       # round m/z to 3 decimal places
+    df['mz'] = df.mz.round(4)       # round m/z to 4 decimal places
     # add up the intensities for equal m/z values
     df = df.groupby(df.mz, agg='sum', sort=True)
 
