@@ -445,7 +445,7 @@ class Maldi_MS():
             for i in index ]                # convert all spectra to a DataFrame
         df = vaex.concat(spectra_df)        # build one big DataFrame
 
-        df['mz'] = df.mz.round(3)           # round m/z to 3 decimal places
+        df['mz'] = df.mz.round(4)           # round m/z to 3 decimal places
         # add up the intensities for equal m/z values
         df = df.groupby(df.mz, agg='sum', sort=True)
 
