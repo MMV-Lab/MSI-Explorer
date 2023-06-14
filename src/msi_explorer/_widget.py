@@ -13,7 +13,7 @@ from ._reader import open_dialog, napari_get_reader
 from ._analysis import AnalysisWindow
 
 # TODO: check tests
-class ExampleQWidget(QWidget):
+class MSI_Explorer(QWidget):
     """
     The main widget of our application
     

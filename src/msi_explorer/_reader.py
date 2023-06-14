@@ -1,4 +1,4 @@
-from napari_placeholder import Maldi_MS
+from msi_explorer import Maldi_MS
 from qtpy.QtWidgets import QFileDialog
 
 def open_dialog(parent, filetype = "", directory = ""):
