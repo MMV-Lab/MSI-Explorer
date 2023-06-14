@@ -1,0 +1,30 @@
+name: MSI-Explorer
+display_name: MSI-Explorer
+contributions:
+  commands:
+    - id: MSI-Explorer.get_reader
+      python_name: msi_explorer._reader:napari_get_reader
+      title: Open data with MSI-Explorer
+    - id: MSI-Explorer.write_multiple
+      python_name: msi_explorer._writer:write_multiple
+      title: Save multi-layer data with MSI-Explorer
+    - id: MSI-Explorer.write_single_image
+      python_name: msi_explorer._writer:write_single_image
+      title: Save image data with MSI-Explorer
+    - id: MSI-Explorer.make_qwidget
+      python_name: msi_explorer._widget:MSI_Explorer
+      title: Make MSI-Explorer
+  readers:
+    - command: msi_explorer.get_reader
+      accepts_directories: false
+      filename_patterns: ['*.imzML']
+  writers:
+    - command: MSI-Explorer.write_multiple
+      layer_types: ['image*','labels*']
+      filename_extensions: []
+    - command: MSI-Explorer.write_single_image
+      layer_types: ['image']
+      filename_extensions: ['.npy']
+  widgets:
+    - command: MSI-Explorer.make_qwidget
+      display_name: MSI-Explorer
