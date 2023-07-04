@@ -4,6 +4,7 @@ from qtpy.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
+import napari
 
 from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
@@ -113,8 +114,12 @@ class SelectionWindow(QWidget):
         self.btn_export_spectrum_plot.setMaximumWidth(180)
         btn_select_database = QPushButton("Select")
         btn_select_database.setMaximumWidth(80)
-        self.btn_pseudo_mean_spectrum = QPushButton("Show pseudo mean spectrum")
-        self.btn_pseudo_mean_spectrum.setMaximumWidth(220)
+        """self.btn_pseudo_mean_spectrum = QPushButton("Show pseudo mean spectrum")
+        self.btn_pseudo_mean_spectrum.setMaximumWidth(220)"""
+        self.btn_select_roi = QPushButton("Select ROI for mean spectrum")
+        self.btn_select_roi.setMaximumWidth(225)
+        self.btn_roi_mean = QPushButton("Calculate mean spectrum for ROI")
+        self.btn_roi_mean.setMaximumWidth(240)
         self.btn_true_mean_spectrum = QPushButton("Show true mean spectrum")
         self.btn_true_mean_spectrum.setMaximumWidth(200)
         
@@ -125,17 +130,22 @@ class SelectionWindow(QWidget):
         self.btn_reset_view.clicked.connect(self.reset_plot)
         self.btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
-        self.btn_pseudo_mean_spectrum.clicked.connect(self.sample_mean_spectrum)
+        #self.btn_pseudo_mean_spectrum.clicked.connect(self.sample_mean_spectrum)
+        self.btn_select_roi.clicked.connect(self.select_roi)
+        self.btn_roi_mean.clicked.connect(self.calculate_roi_mean_spectrum)
         self.btn_true_mean_spectrum.clicked.connect(self.calculate_true_mean_spectrum)
         self.btn_export_spectrum_data.clicked.connect(self.export_spectrum_data)
         self.btn_export_spectrum_plot.clicked.connect(self.export_spectrum_plot)
         
         self.btn_reset_view.setEnabled(False)
         self.btn_display_current_view.setEnabled(False)
-        self.btn_pseudo_mean_spectrum.setEnabled(False)
+        #self.btn_pseudo_mean_spectrum.setEnabled(False)
+        self.btn_select_roi.setEnabled(False)
         self.btn_true_mean_spectrum.setEnabled(False)
         self.btn_export_spectrum_data.setEnabled(False)
         self.btn_export_spectrum_plot.setEnabled(False)
+        
+        self.btn_roi_mean.hide()
         
         # Radiobuttons
         self.radio_btn_replace_layer = QRadioButton("Single panel_view")
@@ -200,7 +210,9 @@ class SelectionWindow(QWidget):
         mean_frame.setLayout(QHBoxLayout())
         mean_frame.layout().addWidget(label_mean)
         mean_frame.layout().addWidget(self.btn_true_mean_spectrum)
-        mean_frame.layout().addWidget(self.btn_pseudo_mean_spectrum)
+        #mean_frame.layout().addWidget(self.btn_pseudo_mean_spectrum)
+        mean_frame.layout().addWidget(self.btn_select_roi)
+        mean_frame.layout().addWidget(self.btn_roi_mean)
         
         self.layout().addWidget(mean_frame)
         self.layout().addWidget(line_2)
@@ -499,6 +511,22 @@ class SelectionWindow(QWidget):
         
         if not "sample points" in self.viewer.layers:
             self.viewer.add_labels(self.ms_object.get_samplepoints(), name = "sample points")
+            
+    def select_roi(self):
+        self.btn_roi_mean.show()
+        self.btn_select_roi.hide()
+        if not "ROI" in self.viewer.layers:
+            empty_layer = np.zeros_like(self.viewer.layers[self.viewer.layers.index("main view")].data, dtype=int)
+            self.viewer.add_labels(empty_layer, name = "ROI")
+        roi_layer = self.viewer.layers[self.viewer.layers.index("ROI")]
+        napari.viewer.current_viewer().layers.select_all()
+        napari.viewer.current_viewer().layers.selection.select_only(roi_layer)
+        roi_layer.mode = "paint"
+    
+    def calculate_roi_mean_spectrum(self):
+        self.btn_select_roi.show()
+        self.btn_roi_mean.hide()
+        pass
         
     def calculate_true_mean_spectrum(self):
         """
