@@ -254,6 +254,7 @@ class SelectionWindow(QWidget):
             if index == -1:
                 return
             data = self.ms_object.get_spectrum(index)
+            self.data_array = np.array(data)
             self.update_plot(data, position)
         
     def keyPressEvent(self, event):
@@ -276,6 +277,7 @@ class SelectionWindow(QWidget):
             if index == -1:
                 return
             data = self.ms_object.get_spectrum(index)
+            self.data_array = np.array(data)
             self.update_plot(data, position)
         
     # creates plot from passed data
@@ -289,7 +291,7 @@ class SelectionWindow(QWidget):
         ----------
         data : list, optional
             The numpy arrays holding x and y coordinates (default is None)
-        position : tupple, optional
+        position : tuple, optional
             Position of the selected spectrum
             
         Returns
@@ -297,6 +299,11 @@ class SelectionWindow(QWidget):
         canvas
             A canvas displaying the passed spectrum
         """
+        if not position is None:
+            self.position = position
+        elif hasattr(self,"position"):
+            position = self.position
+            
         fig = Figure(figsize=(6,6))
         #fig.patch.set_facecolor("#262930")
         axes = fig.add_subplot(111)
@@ -313,7 +320,6 @@ class SelectionWindow(QWidget):
         axes.set_ylabel("intensity")
         """axes.tick_params(axis="x", colors="white")
         axes.tick_params(axis="y", colors="white")"""
-        
         
         if data is None:
             axes.plot()
@@ -369,7 +375,7 @@ class SelectionWindow(QWidget):
         """
         Replaces canvas with fully zoomed out canvas
         """
-        self.update_plot(self.data_array)
+        self.update_plot(self.data_array,)
         
     def select_database(self):
         """
@@ -478,8 +484,11 @@ class SelectionWindow(QWidget):
         """
         if not hasattr(self, 'displayed_data'):
             return
-        tolerance = self.displayed_data[-1,0] - self.displayed_data[0,0]
-        mz = (self.displayed_data[0,0] + self.displayed_data[-1,0]) / 2
+        print("left bound: {}, right bound: {}".format(self.displayed_data[0,0],
+                                                       self.displayed_data[0,-1]))
+        tolerance = (self.displayed_data[0,-1] - self.displayed_data[0,0]) / 2
+        mz = (self.displayed_data[0,-1] + self.displayed_data[0,0]) / 2
+        print("mz: {}, tolerance: {}".format(mz, tolerance))
         self.calculate_image(mz, tolerance)
             
     def sample_mean_spectrum(self):
