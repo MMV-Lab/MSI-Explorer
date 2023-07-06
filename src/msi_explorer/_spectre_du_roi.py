@@ -41,8 +41,6 @@ def spectre_du_roi(maldi_ms, roi):
 
     if len(index) == 0:     # Is any spectrum in the ROI?
         raise ValueError('The ROI is empty')
-    else:
-        print('index =', index)
 
     spectra = maldi_ms.get_all_spectra()
 
