@@ -1,4 +1,4 @@
-__version__ = "0.0.6"
+__version__ = "0.1.1"
 
 from ._maldi_ms_data import Maldi_MS
 from ._analysis import AnalysisWindow
