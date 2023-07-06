@@ -10,6 +10,7 @@ from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
 from ._true_mean_spec import get_true_mean_spec
 from ._writer import save_dialog
+from ._spectre_du_roi import spectre_du_roi
 
 class SelectionWindow(QWidget):
     """
@@ -114,8 +115,6 @@ class SelectionWindow(QWidget):
         self.btn_export_spectrum_plot.setMaximumWidth(180)
         btn_select_database = QPushButton("Select")
         btn_select_database.setMaximumWidth(80)
-        """self.btn_pseudo_mean_spectrum = QPushButton("Show pseudo mean spectrum")
-        self.btn_pseudo_mean_spectrum.setMaximumWidth(220)"""
         self.btn_select_roi = QPushButton("Select ROI for mean spectrum")
         self.btn_select_roi.setMaximumWidth(225)
         self.btn_roi_mean = QPushButton("Calculate mean spectrum for ROI")
@@ -130,7 +129,6 @@ class SelectionWindow(QWidget):
         self.btn_reset_view.clicked.connect(self.reset_plot)
         self.btn_display_current_view.clicked.connect(self.display_image_from_plot)
         btn_select_database.clicked.connect(self.select_database)
-        #self.btn_pseudo_mean_spectrum.clicked.connect(self.sample_mean_spectrum)
         self.btn_select_roi.clicked.connect(self.select_roi)
         self.btn_roi_mean.clicked.connect(self.calculate_roi_mean_spectrum)
         self.btn_true_mean_spectrum.clicked.connect(self.calculate_true_mean_spectrum)
@@ -139,7 +137,6 @@ class SelectionWindow(QWidget):
         
         self.btn_reset_view.setEnabled(False)
         self.btn_display_current_view.setEnabled(False)
-        #self.btn_pseudo_mean_spectrum.setEnabled(False)
         self.btn_select_roi.setEnabled(False)
         self.btn_true_mean_spectrum.setEnabled(False)
         self.btn_export_spectrum_data.setEnabled(False)
@@ -210,7 +207,6 @@ class SelectionWindow(QWidget):
         mean_frame.setLayout(QHBoxLayout())
         mean_frame.layout().addWidget(label_mean)
         mean_frame.layout().addWidget(self.btn_true_mean_spectrum)
-        #mean_frame.layout().addWidget(self.btn_pseudo_mean_spectrum)
         mean_frame.layout().addWidget(self.btn_select_roi)
         mean_frame.layout().addWidget(self.btn_roi_mean)
         
@@ -503,15 +499,6 @@ class SelectionWindow(QWidget):
         print("mz: {}, tolerance: {}".format(mz, tolerance))
         self.calculate_image(mz, tolerance)
             
-    def sample_mean_spectrum(self):
-        """
-        Displays the sample mean spectrum in the graph view
-        """
-        self.update_plot(self.sample_mean_spectrum, position = "sample mean")
-        
-        if not "sample points" in self.viewer.layers:
-            self.viewer.add_labels(self.ms_object.get_samplepoints(), name = "sample points")
-            
     def select_roi(self):
         self.btn_roi_mean.show()
         self.btn_select_roi.hide()
@@ -526,7 +513,25 @@ class SelectionWindow(QWidget):
     def calculate_roi_mean_spectrum(self):
         self.btn_select_roi.show()
         self.btn_roi_mean.hide()
-        pass
+        try:
+            roi_layer = self.viewer.layers[self.viewer.layers.index("ROI")]
+        except ValueError:
+            print("Please don't remove the ROI layer")
+            return
+        index_lists = np.nonzero(roi_layer.data)
+        indices = []
+        for i in range(len(index_lists[0])):
+            indices.append([index_lists[0][i], index_lists[1][i]])
+            
+        worker = spectre_du_roi(self.ms_object, indices)
+        worker.returned.connect(self.display_roi_mean_spectrum)
+        worker.start()
+        
+    def display_roi_mean_spectrum(self, spectrum):
+        self.data_array = np.array(spectrum)
+        self.displayed_data = self.data_array
+        self.update_plot(spectrum, position = "ROI mean")
+        
         
     def calculate_true_mean_spectrum(self):
         """
@@ -583,6 +588,13 @@ class SelectionWindow(QWidget):
         """
         Exports the current spectrum as [insert file format here]
         """
+        layer = self.viewer.layers[self.viewer.layers.index("main view")].colormap
+        print("colorbar: {}".format(dir(layer.colorbar)))
+        print("colors: {}".format(dir(layer.colors)))
+        print("constructs: {}".format(dir(layer.construct)))
+        print("controls: {}".format(dir(layer.controls)))
+        print("interpolation: {}".format(dir(layer.interpolation)))
+        #self.viewer.add_labels(self.viewer.layers[self.viewer.layers.index("main view")].colormap.colorbar, name = "colorbar")
         print("dummy for later")
         pass
 
