@@ -1,6 +1,6 @@
 import numpy as np
 
-from napari_placeholder import napari_get_reader
+from msi_explorer import napari_get_reader
 
 
 # tmp_path is a pytest fixture

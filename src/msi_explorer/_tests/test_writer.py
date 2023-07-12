@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 # from napari_placeholder import write_single_image, write_multiple
-from napari_placeholder import write_metadata
+from msi_explorer import write_metadata
 
 # tmp_path is a pytest fixture
 def test_metadata_writer(tmp_path):

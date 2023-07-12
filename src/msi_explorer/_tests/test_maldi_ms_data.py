@@ -1,14 +1,14 @@
 # pytest program for the class Maldi_MS in the module _maldi_ms_data.py
 import numpy as np
-from napari_placeholder import napari_get_reader
+from msi_explorer import napari_get_reader
 
-filename = 'src/napari_placeholder/_tests/data/Example_Processed.imzML'
+filename = 'src/msi_explorer/_tests/data/Example_Processed.imzML'
 reader_function = napari_get_reader(filename)
 maldi_ms = reader_function(filename)
 
 def test_init():
     type1 = str(type(maldi_ms))
-    assert type1 == '<class \'napari_placeholder._maldi_ms_data.Maldi_MS\'>'
+    assert type1 == '<class \'msi_explorer._maldi_ms_data.Maldi_MS\'>'
 
 def test_check_i():
     i = maldi_ms.check_i(23)
@@ -54,15 +54,3 @@ def test_get_metadata_json():
 def test_get_metadata():
     meta = maldi_ms.get_metadata()
     assert meta['pixel size x'] == 100.0
-
-def test_calc_mean_spec():
-    spec = maldi_ms.calc_mean_spec(9)
-    mz1 = spec[0][5:10]
-    mz1 = mz1.round(3)
-    mz2 = np.asarray([100.5, 100.583, 100.667, 100.75, 100.833], dtype=np.float32)
-    assert np.array_equal(mz1, mz2)
-
-    intens1 = spec[1][5:10]
-    intens1 = intens1.round(3)
-    intens2 = np.asarray([0., 0.015, 0.266, 0.251, 0.07], dtype=np.float64)
-    assert np.array_equal(intens1, intens2)

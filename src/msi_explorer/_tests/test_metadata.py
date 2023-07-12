@@ -1,13 +1,13 @@
-from napari_placeholder import MetadataWindow, napari_get_reader
+from msi_explorer import MetadataWindow, napari_get_reader
 
-filename = 'src/napari_placeholder/_tests/data/Example_Processed.imzML'
+filename = 'src/msi_explorer/_tests/data/Example_Processed.imzML'
 reader = napari_get_reader(filename)
 maldi_data = reader(filename)
 
 def test_metadata_expansion_key(make_napari_viewer):
     
     # Create metadata window
-    my_window = MetadataWindow(maldi_data)
+    my_window = MetadataWindow(maldi_data,None)
     
     # Fill "key" field of last line
     all_lines = my_window.layout().itemAt(0).widget().layout()
@@ -22,7 +22,7 @@ def test_metadata_expansion_key(make_napari_viewer):
 def test_metadata_expansion_value(make_napari_viewer):
     
     # Create metadata window
-    my_window = MetadataWindow(maldi_data)
+    my_window = MetadataWindow(maldi_data,None)
     
     # Fill "value" field of last line
     all_lines = my_window.layout().itemAt(0).widget().layout()
@@ -37,7 +37,7 @@ def test_metadata_expansion_value(make_napari_viewer):
 def test_metadata_expansion_both(make_napari_viewer):
     
     # Create metadata window
-    my_window = MetadataWindow(maldi_data)
+    my_window = MetadataWindow(maldi_data,None)
     
     # Fill "key" and "value" fields of last line
     all_lines = my_window.layout().itemAt(0).widget().layout()
