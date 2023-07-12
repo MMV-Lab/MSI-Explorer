@@ -220,8 +220,8 @@ class MSI_Explorer(QWidget):
         index = self.ms_object.get_index(y, x)
         position = "{}, #{}".format((x,y), index)
         self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(index))
-        self.selection_window.update_plot(self.selection_window.data_array, position = position)
-        self.selection_window.display_image_from_plot()
+        #self.selection_window.update_plot(self.selection_window.data_array, position = position)
+        #self.selection_window.display_image_from_plot()
         
         # enable buttons after loading data
         self.btn_view_metadata.setEnabled(True)
