@@ -3,7 +3,7 @@ Module for the definition of the class Maldi_MS
 
 Imports
 -------
-numpy, matplotlib.pyplot, json, vaex, random, pyimzml.ImzMLParser
+numpy, matplotlib.pyplot, json, random, pyimzml.ImzMLParser
 
 Exports
 -------
@@ -16,7 +16,6 @@ Maldi_MS
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-import vaex
 import time
 import random
 from pyimzml.ImzMLParser import ImzMLParser, getionimage
@@ -27,26 +26,26 @@ class Maldi_MS():
     
     Attributes
     ----------
-    _parser : class ImzMLParser
+    parser : class ImzMLParser
         This is the result of the method ImzMLParser('NN.imzML')
-    _spectra : list
+    spectra : list
         A list of lists containing two ndarrays: m/z and intensity
-    _coordinates : list
+    coordinates : list
         A list of tuples containing the coordinates (x, y, z)
-    -samplepoints : list
+    samplepoints : list
         list of the indices of the spectra for the calculation of the mean
         spectrum
-    _metadata : dict
+    metadata : dict
         A nested dictionary with the metadata of the measurement
-    _num_spectra : int
-        Number of spectra in the list _spectra
+    num_spectra : int
+        Number of spectra in the list spectra
 
     Methods
     -------
     __init__(filename)
         class constructor
     check_i(i)
-        check whether i is in the interval [0, _num_spectra-1]
+        check whether i is in the interval [0, num_spectra-1]
     get_spectrum(i)
         get a list with m/z and intensity of spectrum[i]
     get_all_spectra()
@@ -69,11 +68,6 @@ class Maldi_MS():
         get a dictionary with selected metadata
     merge_two_spectra(spectrum1, ,spectrum2)
         merge two Maldi-MS spectra together
-    pseudo_mean_spec(n=1000)
-        calculate a mean spectrum for n spectra
-    get_samplepoints(self)
-        get an image with the sample points for the calculation of the mean
-        spectrum
     """
 
 
@@ -89,27 +83,25 @@ class Maldi_MS():
 
         try:
             p = ImzMLParser(filename)
-            # p = ImzMLParser(filename, include_spectra_metadata='full')
         except BaseException as err:
             print('Error:', err)
 
-        self._parser = p
-        self._spectra = list()      # empty list
-        self._coordinates = list()
-        self._samplepoints = list() # sample points for the mean spectrum
+        self.parser = p
+        self.spectra = []           # empty list
+        self.coordinates = []
+        self.samplepoints = []      # sample points for the mean spectrum
         for i, (x, y, z) in enumerate(p.coordinates):
             mz, intensities = p.getspectrum(i)
-            self._spectra.append([mz, intensities])     # list of lists
-            self._coordinates.append((x, y, z))         # list of tuples
+            self.spectra.append([mz, intensities])      # list of lists
+            self.coordinates.append((x, y, z))          # list of tuples
 
-        self._metadata = p.metadata.pretty()            # nested dictionary
-        # self._spectrum_full_metadata = p.spectrum_full_metadata
-        self._num_spectra = len(self._coordinates)      # number of spectra
+        self.metadata = p.metadata.pretty()             # nested dictionary
+        self.num_spectra = len(self.coordinates)        # number of spectra
 
 
     def check_i(self, i):
         """
-        check whether index i is in the interval [0, _num_spectra-1]
+        check whether index i is in the interval [0, num_spectra-1]
 
         Parameter
         ---------
@@ -119,9 +111,9 @@ class Maldi_MS():
         Returns
         -------
         int
-            i if 0 <= i <= _num_spectra-1
+            i if 0 <= i <= num_spectra-1
             0 if i < 0
-            _num_spectra-1 if i >= _num_spectra
+            num_spectra-1 if i >= num_spectra
         """
 
         try:
@@ -130,10 +122,10 @@ class Maldi_MS():
             print('Error:', err)
             i = 0
 
-        # Is 0 <= i < self._num_spectra?
+        # Is 0 <= i < self.num_spectra?
         if i < 0: i = 0
-        elif i >= self._num_spectra:
-            i = self._num_spectra - 1
+        elif i >= self.num_spectra:
+            i = self.num_spectra - 1
         return i
 
 
@@ -153,7 +145,7 @@ class Maldi_MS():
         """
 
         i = self.check_i(i)
-        return self._spectra[i]
+        return self.spectra[i]
 
 
     def get_all_spectra(self):
@@ -170,7 +162,7 @@ class Maldi_MS():
         """
 
         # (17.05.2023)
-        return self._spectra
+        return self.spectra
 
 
     def plot_spectrum(self, i):
@@ -184,7 +176,7 @@ class Maldi_MS():
         """
 
         i = self.check_i(i)
-        spectrum = self._spectra[i]
+        spectrum = self.spectra[i]
         mz = spectrum[0]
         intensities = spectrum[1]
         plt.plot(mz, intensities)
@@ -205,7 +197,7 @@ class Maldi_MS():
             the number of spectra
         """
 
-        return self._num_spectra
+        return self.num_spectra
 
 
     def get_index(self, y, x):
@@ -228,7 +220,7 @@ class Maldi_MS():
         # Find the index (i) of a mass spectrum at the position (x, y, 1).
         # (21.02.2023)
         try:
-            i = self._coordinates.index((x, y, 1))
+            i = self.coordinates.index((x, y, 1))
             return i
         except BaseException:
             return -1
@@ -251,7 +243,7 @@ class Maldi_MS():
         """
 
         i = self.check_i(i)
-        return self._coordinates[i]
+        return self.coordinates[i]
 
 
     def get_ion_image(self, mz, tol=0.1):
@@ -272,7 +264,7 @@ class Maldi_MS():
         """
 
         # Export of an ion image for the value m/z +/- tol (10.02.2023)
-        return getionimage(self._parser, mz, tol)
+        return getionimage(self.parser, mz, tol)
 
 
     def get_tic(self):
@@ -286,10 +278,10 @@ class Maldi_MS():
         """
 
         # (17.02.2023)
-        n = self._num_spectra
+        n = self.num_spectra
         tic = np.zeros(n)
 
-        for i, spectrum in enumerate(self._spectra):
+        for i, spectrum in enumerate(self.spectra):
             tic[i] = spectrum[1].sum()
 
         return tic
@@ -305,11 +297,7 @@ class Maldi_MS():
             all metadata as a string in JSON format
         """
 
-        return json.dumps(self._metadata, sort_keys=False, indent=4)
-
-
-    # def print_sf_metadata(self):
-        # print(self._spectrum_full_metadata[0].pretty())
+        return json.dumps(self.metadata, sort_keys=False, indent=4)
 
 
     def get_metadata(self):
@@ -325,7 +313,7 @@ class Maldi_MS():
         # Read the dictionary p.metadata.pretty() to extract some metadata.
         # (23.02.2023)
 
-        meta = self._metadata
+        meta = self.metadata
         d = dict()
 
         try:
@@ -410,90 +398,3 @@ class Maldi_MS():
         """
 
         return d
-
-
-    def pseudo_mean_spec(self, n=1000):
-        """
-        calculate a pseudo mean spectrum from n random spectra
-
-        Parameters
-        ----------
-        n : int
-            number of spectra, used to calculate a pseudo mean spectrum
-
-        Returns
-        -------
-        list
-            the pseudo mean spectrum in the format [mz, intensity]
-        """
-
-        # (02.03.2023, geändert: 06.06.2023)
-        start_time = time.time()       # start time
-
-        # choose n random spectra from 0 to _num_spectra - 1
-        if n < self._num_spectra:
-            index = range(self._num_spectra)
-            index = random.sample(index, n)
-            index.sort()
-        else:
-            index = range(self._num_spectra)
-
-        self._samplepoints = index      # save the sample points
-
-        spectra = self._spectra
-        spectra_df = [ vaex.from_arrays(mz=spectra[i][0], intens=spectra[i][1]) \
-            for i in index ]                # convert all spectra to a DataFrame
-        df = vaex.concat(spectra_df)        # build one big DataFrame
-
-        df['mz'] = df.mz.round(4)           # round m/z to 4 decimal places
-        # add up the intensities for equal m/z values
-        df = df.groupby(df.mz, agg='sum', sort=True)
-
-        mz = df.mz.values.to_numpy()        # convert the df to NumPy ndarray
-        intens = df.intens_sum.values
-        spectrum = (mz, intens)
-
-        stop_time = time.time()
-        print('run time: %.2f seconds' % (stop_time - start_time))
-        print('count = %d' % (df.count()))
-        print('m/z = %.3f - %.3f' % (df.min(df.mz), df.max(df.mz)))
-        print('intensity = %.1f - %9.4g' % (df.min(df.intens_sum), df.max(df.intens_sum)))
-
-        return spectrum
-
-
-    def get_samplepoints(self):
-        """
-        get an image with the sample points used for the calculation of the
-        mean spectrum
-
-        Returns
-        -------
-        numpy.ndarray
-            ndarray showing the position fo the sample points
-        """
-
-        # (09.05.2023)
-        # determine the size of the images from the metadata
-        try:
-            max_x = self._metadata['scan_settings']['scansettings1'] \
-                ['max count of pixels x']
-        except BaseException:
-            max_x = 0
-
-        try:
-            max_y = self._metadata['scan_settings']['scansettings1'] \
-                ['max count of pixels y']
-        except BaseException:
-            max_y = 0
-
-        # create the image of size max_y * max_x
-        # print('max_x =', max_x, 'max_y =', max_y)       # test output
-        image = np.zeros((max_y, max_x), dtype=np.int32)
-        # print('len_sp =', len(self._samplepoints))
-
-        for index in self._samplepoints:
-            (x, y, z) = self.get_coordinates(index)
-            image[y-1, x-1] = 1
-                
-        return image
