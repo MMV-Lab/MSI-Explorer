@@ -1,11 +1,11 @@
-# napari-PLACEHOLDER
+# MSI-Explorer
 
-[![License BSD-3](https://img.shields.io/pypi/l/napari-PLACEHOLDER.svg?color=green)](https://github.com/MMV-Lab/napari-PLACEHOLDER/raw/main/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/napari-PLACEHOLDER.svg?color=green)](https://pypi.org/project/napari-PLACEHOLDER)
-[![Python Version](https://img.shields.io/pypi/pyversions/napari-PLACEHOLDER.svg?color=green)](https://python.org)
-[![tests](https://github.com/MMV-Lab/napari-PLACEHOLDER/workflows/tests/badge.svg)](https://github.com/MMV-Lab/napari-PLACEHOLDER/actions)
-[![codecov](https://codecov.io/gh/MMV-Lab/napari-PLACEHOLDER/branch/main/graph/badge.svg?token=LR8CU032ZD)](https://codecov.io/gh/MMV-Lab/napari-PLACEHOLDER)
-[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-PLACEHOLDER)](https://napari-hub.org/plugins/napari-PLACEHOLDER)
+[![License BSD-3](https://img.shields.io/pypi/l/MSI-Explorer.svg?color=green)](https://github.com/MMV-Lab/MSI-Explorer/raw/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/MSI-Explorer.svg?color=green)](https://pypi.org/project/MSI-Explorer)
+[![Python Version](https://img.shields.io/pypi/pyversions/MSI-Explorer.svg?color=green)](https://python.org)
+[![tests](https://github.com/MMV-Lab/MSI-Explorer/workflows/tests/badge.svg)](https://github.com/MMV-Lab/MSI-Explorer/actions)
+[![codecov](https://codecov.io/gh/MMV-Lab/MSI-Explorer/branch/main/graph/badge.svg?token=LR8CU032ZD)](https://codecov.io/gh/MMV-Lab/MSI-Explorer)
+[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/MSI-Explorer)](https://napari-hub.org/plugins/MSI-Explorer)
 
 A simple plugin to use with napari
 
@@ -23,15 +23,15 @@ https://napari.org/stable/plugins/index.html
 
 ## Installation
 
-You can install `napari-PLACEHOLDER` via [pip]:
+You can install `MSI-Explorer` via [pip]:
 
-    pip install napari-PLACEHOLDER
+    pip install MSI-Explorer
 
 
 
 To install latest development version :
 
-    pip install git+https://github.com/MMV-Lab/napari-PLACEHOLDER.git
+    pip install git+https://github.com/MMV-Lab/MSI-Explorer.git
 
 
 ## Contributing
@@ -42,7 +42,7 @@ the coverage at least stays the same before you submit a pull request.
 ## License
 
 Distributed under the terms of the [BSD-3] license,
-"napari-PLACEHOLDER" is free and open source software
+"MSI-Explorer" is free and open source software
 
 ## Issues
 
@@ -59,7 +59,7 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [Mozilla Public License 2.0]: https://www.mozilla.org/media/MPL/2.0/index.txt
 [cookiecutter-napari-plugin]: https://github.com/napari/cookiecutter-napari-plugin
 
-[file an issue]: https://github.com/MMV-Lab/napari-PLACEHOLDER/issues
+[file an issue]: https://github.com/MMV-Lab/MSI-Explorerissues
 
 [napari]: https://github.com/napari/napari
 [tox]: https://tox.readthedocs.io/en/latest/
