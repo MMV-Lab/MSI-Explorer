@@ -3,7 +3,7 @@ Module for the definition of the class Maldi_MS
 
 Imports
 -------
-numpy, matplotlib.pyplot, json, random, pyimzml.ImzMLParser
+numpy, matplotlib.pyplot, json, pyimzml.ImzMLParser
 
 Exports
 -------
@@ -17,7 +17,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import json
 import time
-import random
 from pyimzml.ImzMLParser import ImzMLParser, getionimage
 
 class Maldi_MS():
@@ -66,8 +65,6 @@ class Maldi_MS():
         get a string of the metadata in JSON format
     get_metadata()
         get a dictionary with selected metadata
-    merge_two_spectra(spectrum1, ,spectrum2)
-        merge two Maldi-MS spectra together
     """
 
 
@@ -81,15 +78,14 @@ class Maldi_MS():
             Path and file name of the imzML file
         """
 
-        try:
-            p = ImzMLParser(filename)
-        except BaseException as err:
-            print('Error:', err)
-
+        p = ImzMLParser(filename)
         self.parser = p
         self.spectra = []           # empty list
+        self.normalized_spectra = []
+        self.normalized = False
         self.coordinates = []
         self.samplepoints = []      # sample points for the mean spectrum
+
         for i, (x, y, z) in enumerate(p.coordinates):
             mz, intensities = p.getspectrum(i)
             self.spectra.append([mz, intensities])      # list of lists
@@ -129,6 +125,24 @@ class Maldi_MS():
         return i
 
 
+    def normalize(self, norm_type):
+        if type == 'tic':
+            # calculate a factor for the intensities to set the total
+            # ion current (tic) to np.median(tic)
+            tic = self.get_tic()
+            median = np.median(tic)
+            quotient = tic / median
+            factor = np.reciprocal(quotient)
+
+            self.normalized_spectra = []
+            for i, spectrum in enumerate(self.spectra):
+                spectrum[1] *= factor[i]
+                self.normalized_spectra.append(spectrum)
+
+            self.normalized = True
+        return self.normalized_spectra
+
+
     def get_spectrum(self, i):
         """
         get a list with m/z and intensity of spectrum[i]
@@ -145,7 +159,11 @@ class Maldi_MS():
         """
 
         i = self.check_i(i)
-        return self.spectra[i]
+
+        if self.normalized:
+            return self.normalized_spectra[i]
+        else:
+            return self.spectra[i]
 
 
     def get_all_spectra(self):
@@ -162,7 +180,10 @@ class Maldi_MS():
         """
 
         # (17.05.2023)
-        return self.spectra
+        if self.normalized:
+            return self.normalized_spectra
+        else:
+            return self.spectra
 
 
     def plot_spectrum(self, i):
@@ -176,7 +197,12 @@ class Maldi_MS():
         """
 
         i = self.check_i(i)
-        spectrum = self.spectra[i]
+
+        if self.normalized:
+            spectrum = self._normalized_spectrum[i]
+        else:
+            spectrum = self.spectra[i]
+
         mz = spectrum[0]
         intensities = spectrum[1]
         plt.plot(mz, intensities)
