@@ -83,3 +83,6 @@ venv/
 # written by setuptools_scm
 **/_version.py
 /.pytest_cache/
+
+# Eclipse settings
+.settings/
