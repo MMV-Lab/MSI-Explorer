@@ -16,7 +16,7 @@ Maldi_MS
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-import time
+import os
 from pyimzml.ImzMLParser import ImzMLParser, getionimage
 
 class Maldi_MS():
@@ -77,6 +77,9 @@ class Maldi_MS():
         filename : str
             Path and file name of the imzML file
         """
+
+        if not os.path.isfile(filename):        # Check if the file exists
+            raise FileNotFoundError(filename, 'don\'t exist')
 
         p = ImzMLParser(filename)
         self.parser = p
