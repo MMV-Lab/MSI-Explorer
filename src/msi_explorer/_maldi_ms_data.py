@@ -84,10 +84,9 @@ class Maldi_MS():
         p = ImzMLParser(filename)
         self.parser = p
         self.spectra = []           # empty list
-        self.normalized_spectra = []
+        self.norm_spectra = []
         self.normalized = False
         self.coordinates = []
-        self.samplepoints = []      # sample points for the mean spectrum
 
         for i, (x, y, z) in enumerate(p.coordinates):
             mz, intensities = p.getspectrum(i)
@@ -129,7 +128,7 @@ class Maldi_MS():
 
 
     def normalize(self, norm_type):
-        if type == 'tic':
+        if norm_type == 'tic':
             # calculate a factor for the intensities to set the total
             # ion current (tic) to np.median(tic)
             tic = self.get_tic()
@@ -137,13 +136,15 @@ class Maldi_MS():
             quotient = tic / median
             factor = np.reciprocal(quotient)
 
-            self.normalized_spectra = []
+            self.norm_spectra = []
             for i, spectrum in enumerate(self.spectra):
-                spectrum[1] *= factor[i]
-                self.normalized_spectra.append(spectrum)
+                mz = spectrum[0]
+                intensities = spectrum[1].copy() * factor[i]
+                self.norm_spectra.append([mz, intensities])
 
             self.normalized = True
-        return self.normalized_spectra
+
+        return self.norm_spectra
 
 
     def get_spectrum(self, i):
@@ -164,7 +165,7 @@ class Maldi_MS():
         i = self.check_i(i)
 
         if self.normalized:
-            return self.normalized_spectra[i]
+            return self.norm_spectra[i]
         else:
             return self.spectra[i]
 
@@ -184,7 +185,7 @@ class Maldi_MS():
 
         # (17.05.2023)
         if self.normalized:
-            return self.normalized_spectra
+            return self.norm_spectra
         else:
             return self.spectra
 
@@ -199,13 +200,7 @@ class Maldi_MS():
             index of spectrum[i]
         """
 
-        i = self.check_i(i)
-
-        if self.normalized:
-            spectrum = self._normalized_spectrum[i]
-        else:
-            spectrum = self.spectra[i]
-
+        spectrum = self.get_spectrum(i)
         mz = spectrum[0]
         intensities = spectrum[1]
         plt.plot(mz, intensities)
