@@ -133,32 +133,40 @@ class Maldi_MS():
 
         if norm == 'none':
             self.is_norm = False
-        if norm == 'tic':               # Total ion current
+        elif norm == 'tic':               # Total ion current = Mean
             for spectrum in self.spectra:
-                intensities = spectrum[1].copy()
-                tic = np.mean(intensities)
-                intensities *= (1 / tic)
-                self.norm_spectra.append([spectrum[0], intensities])
+                mz1, intensities1 = spectrum
+                filter = intensities1 != 0.0
+                mz2 = mz1[filter]
+                intensities2 = intensities1[filter]
+
+                tic = np.mean(intensities2)
+                intensities2 /= tic
+                self.norm_spectra.append([mz2, intensities2])
             self.is_norm = True
-        if norm == 'rms':               # Root mean square - Vector norm
+        elif norm == 'rms':               # Root mean square = Vector norm
             for spectrum in self.spectra:
-                intensities = spectrum[1].copy()
-                square1 = np.square(intensities)
+                mz1, intensities1 = spectrum
+                filter = intensities1 != 0.0
+                mz2 = mz1[filter]
+                intensities2 = intensities1[filter]
+
+                square1 = np.square(intensities2)
                 mean1 = np.mean(square1)
                 rms = np.sqrt(mean1)
-                intensities *= (1 / rms)
-                self.norm_spectra.append([spectrum[0], intensities])
+                intensities2 /= rms
+                self.norm_spectra.append([mz2, intensities2])
             self.is_norm = True
-        if norm == 'median':
+        elif norm == 'median':
             for spectrum in self.spectra:
-                intensities = spectrum[1].copy()
-                median1 = np.median(intensities)
-                if median1 == 0.0:      # The median may be zero!
-                    shape1 = intensities.shape
-                    intensities = np.zeros(shape1)
-                else:
-                    intensities *= (1 / median1)
-                self.norm_spectra.append([spectrum[0], intensities])
+                mz1, intensities1 = spectrum
+                filter = intensities1 != 0.0
+                mz2 = mz1[filter]
+                intensities2 = intensities1[filter]
+
+                median1 = np.median(intensities2)
+                intensities2 /= median1
+                self.norm_spectra.append([mz2, intensities2])
             self.is_norm = True
 
 
@@ -216,8 +224,7 @@ class Maldi_MS():
         """
 
         spectrum = self.get_spectrum(i)
-        mz = spectrum[0]
-        intensities = spectrum[1]
+        mz, intensities = spectrum
         plt.plot(mz, intensities)
         plt.xlabel('m/z')
         plt.ylabel('intensity')
@@ -444,6 +451,8 @@ class Maldi_MS():
 
     def getionimage_norm(self, p, mz_value, tol=0.1, z=1, reduce_func=sum):
         """
+        Reference: https://github.com/alexandrovteam/pyimzML
+
         Get an image representation of the intensity distribution
         of the ion with specified m/z value.
 
