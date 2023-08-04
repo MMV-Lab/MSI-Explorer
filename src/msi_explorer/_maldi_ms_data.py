@@ -3,7 +3,7 @@ Module for the definition of the class Maldi_MS
 
 Imports
 -------
-numpy, matplotlib.pyplot, json, random, pyimzml.ImzMLParser
+numpy, matplotlib.pyplot, json, pyimzml.ImzMLParser
 
 Exports
 -------
@@ -16,9 +16,9 @@ Maldi_MS
 import numpy as np
 import matplotlib.pyplot as plt
 import json
-import time
-import random
-from pyimzml.ImzMLParser import ImzMLParser, getionimage
+import os
+from pyimzml.ImzMLParser import ImzMLParser, getionimage, _bisect_spectrum
+from bisect import bisect_left, bisect_right
 
 class Maldi_MS():
     """
@@ -66,8 +66,6 @@ class Maldi_MS():
         get a string of the metadata in JSON format
     get_metadata()
         get a dictionary with selected metadata
-    merge_two_spectra(spectrum1, ,spectrum2)
-        merge two Maldi-MS spectra together
     """
 
 
@@ -81,15 +79,16 @@ class Maldi_MS():
             Path and file name of the imzML file
         """
 
-        try:
-            p = ImzMLParser(filename)
-        except BaseException as err:
-            print('Error:', err)
+        if not os.path.isfile(filename):        # Check if the file exists
+            raise FileNotFoundError(filename, 'don\'t exist')
 
-        self.parser = p
+        p = ImzMLParser(filename)
+        self.p = p
         self.spectra = []           # empty list
+        self.norm_spectra = []
+        self.is_norm = False
         self.coordinates = []
-        self.samplepoints = []      # sample points for the mean spectrum
+
         for i, (x, y, z) in enumerate(p.coordinates):
             mz, intensities = p.getspectrum(i)
             self.spectra.append([mz, intensities])      # list of lists
@@ -129,6 +128,48 @@ class Maldi_MS():
         return i
 
 
+    def normalize(self, norm):
+        self.norm_spectra = []
+
+        if norm == 'none':
+            self.is_norm = False
+        elif norm == 'tic':               # Total ion current = Mean
+            for spectrum in self.spectra:
+                mz1, intensities1 = spectrum
+                filter = intensities1 != 0.0
+                mz2 = mz1[filter]
+                intensities2 = intensities1[filter]
+
+                tic = np.mean(intensities2)
+                intensities2 /= tic
+                self.norm_spectra.append([mz2, intensities2])
+            self.is_norm = True
+        elif norm == 'rms':               # Root mean square = Vector norm
+            for spectrum in self.spectra:
+                mz1, intensities1 = spectrum
+                filter = intensities1 != 0.0
+                mz2 = mz1[filter]
+                intensities2 = intensities1[filter]
+
+                square1 = np.square(intensities2)
+                mean1 = np.mean(square1)
+                rms = np.sqrt(mean1)
+                intensities2 /= rms
+                self.norm_spectra.append([mz2, intensities2])
+            self.is_norm = True
+        elif norm == 'median':
+            for spectrum in self.spectra:
+                mz1, intensities1 = spectrum
+                filter = intensities1 != 0.0
+                mz2 = mz1[filter]
+                intensities2 = intensities1[filter]
+
+                median1 = np.median(intensities2)
+                intensities2 /= median1
+                self.norm_spectra.append([mz2, intensities2])
+            self.is_norm = True
+
+
     def get_spectrum(self, i):
         """
         get a list with m/z and intensity of spectrum[i]
@@ -145,7 +186,11 @@ class Maldi_MS():
         """
 
         i = self.check_i(i)
-        return self.spectra[i]
+
+        if self.is_norm:
+            return self.norm_spectra[i]
+        else:
+            return self.spectra[i]
 
 
     def get_all_spectra(self):
@@ -162,7 +207,10 @@ class Maldi_MS():
         """
 
         # (17.05.2023)
-        return self.spectra
+        if self.is_norm:
+            return self.norm_spectra
+        else:
+            return self.spectra
 
 
     def plot_spectrum(self, i):
@@ -175,10 +223,8 @@ class Maldi_MS():
             index of spectrum[i]
         """
 
-        i = self.check_i(i)
-        spectrum = self.spectra[i]
-        mz = spectrum[0]
-        intensities = spectrum[1]
+        spectrum = self.get_spectrum(i)
+        mz, intensities = spectrum
         plt.plot(mz, intensities)
         plt.xlabel('m/z')
         plt.ylabel('intensity')
@@ -264,7 +310,10 @@ class Maldi_MS():
         """
 
         # Export of an ion image for the value m/z +/- tol (10.02.2023)
-        return getionimage(self.parser, mz, tol)
+        if self.is_norm:
+            return self.getionimage_norm(self.p, mz, tol)
+        else:
+            return getionimage(self.p, mz, tol)
 
 
     def get_tic(self):
@@ -398,3 +447,42 @@ class Maldi_MS():
         """
 
         return d
+
+
+    def getionimage_norm(self, p, mz_value, tol=0.1, z=1, reduce_func=sum):
+        """
+        Reference: https://github.com/alexandrovteam/pyimzML
+
+        Get an image representation of the intensity distribution
+        of the ion with specified m/z value.
+
+        By default, the intensity values within the tolerance region are summed.
+
+        :param p:
+            the ImzMLParser (or anything else with similar attributes) for the desired dataset
+        :param mz_value:
+            m/z value for which the ion image shall be returned
+        :param tol:
+            Absolute tolerance for the m/z value, such that all ions with values
+            mz_value-|tol| <= x <= mz_value+|tol| are included. Defaults to 0.1
+        :param z:
+            z Value if spectrogram is 3-dimensional.
+        :param reduce_func:
+            the bahaviour for reducing the intensities between mz_value-|tol| and mz_value+|tol| to a single value. Must
+            be a function that takes a sequence as input and outputs a number. By default, the values are summed.
+
+        :return:
+            numpy matrix with each element representing the ion intensity in this
+            pixel. Can be easily plotted with matplotlib
+        """
+        tol = abs(tol)
+        im = np.zeros((self.p.imzmldict["max count of pixels y"], \
+            self.p.imzmldict["max count of pixels x"]))
+        for i, (x, y, z_) in enumerate(self.p.coordinates):
+            if z_ == 0:
+                UserWarning("z coordinate = 0 present, if you're getting blank images set getionimage(.., .., z=0)")
+            if z_ == z:
+                mzs, ints = map(lambda x: np.asarray(x), self.get_spectrum(i))
+                min_i, max_i = _bisect_spectrum(mzs, mz_value, tol)
+                im[y - 1, x - 1] = reduce_func(ints[min_i:max_i+1])
+        return im
