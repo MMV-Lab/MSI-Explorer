@@ -5,7 +5,6 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
 import napari
-import csv
 
 from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
@@ -82,18 +81,7 @@ class SelectionWindow(QWidget):
         self.viewer = viewer
         self.setLayout(QVBoxLayout())
 
-        #self.plot()
-        figure = Figure(figsize=(6,6))
-        axes = figure.add_subplot(111)
-        axes.tick_params(axis="x")
-        axes.tick_params(axis="y")
-        axes.set_xlabel("m/z")
-        axes.set_ylabel("intensity")
-        
-        axes.plot()
-        self.axes = axes
-        canvas = FigureCanvas(figure)
-        
+        self.plot()
         self.metabolites = {}
         
         ### QObjects
@@ -203,7 +191,7 @@ class SelectionWindow(QWidget):
         
         ### Organize objects via widgets
         
-        self.layout().addWidget(canvas)
+        self.layout().addWidget(self.canvas)
         
         visual_buttons = QWidget()
         visual_buttons.setLayout(QHBoxLayout())
@@ -266,26 +254,16 @@ class SelectionWindow(QWidget):
             viewer : Viewer
                 The Napari viewer instance
             """
-            position = viewer.cursor.position
             index = self.ms_object.get_index(
-                round(position[0]),round(position[1])
+                round(viewer.cursor.position[0]),round(viewer.cursor.position[1])
             )
+            position = "{}, #{}".format((round(viewer.cursor.position[0]),round(viewer.cursor.position[1])),
+                                        self.ms_object.get_index(round(viewer.cursor.position[0]), round(viewer.cursor.position[1])))
             if index == -1:
                 return
-            normalized = f'Normalized ()'
-            title = f"{'Original:' if self.ms_object.is_norm else normalized} \
-            {(round(position[0]), round(position[1]))}, #\
-            {self.ms_object.get_index(round(position[0]), round(position[1]))}"
-            #position = "{}, #{}".format((round(position[0]),round(position[1])),
-            #                            self.ms_object.get_index(round(position[0]), round(position[1])))
-            spectrum = self.ms_object.get_spectrum(index)
-            self.current_spectrum_array = np.asarray(spectrum)
-            # display spectrum with title
-            
-            
             data = self.ms_object.get_spectrum(index)
             self.data_array = np.array(data)
-            self.update_plot(data, title)
+            self.update_plot(data, position)
         
     def keyPressEvent(self, event):
         """
@@ -299,31 +277,16 @@ class SelectionWindow(QWidget):
             The Event calling this function
         """
         if event.text() == 's':
-            position = self.viewer.cursor.position
             index = self.ms_object.get_index(
-                round(position[0]),round(position[1])
+                round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1])
             )
+            position = "{}, #{}".format((round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1])),
+                                        self.ms_object.get_index(round(self.viewer.cursor.position[0]), round(self.viewer.cursor.position[1])))
             if index == -1:
                 return
-            normalized = f'Normalized ()'
-            title = f"{'Original:' if self.ms_object.is_norm else normalized} \
-            {(round(position[0]), round(position[1]))}, #\
-            {self.ms_object.get_index(round(position[0]), round(position[1]))}"
-            #position = "{}, #{}".format((round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1])),
-            #                            self.ms_object.get_index(round(self.viewer.cursor.position[0]), round(self.viewer.cursor.position[1])))
-            spectrum = self.ms_object.get_spectrum(index)
-            self.current_spectrum_array = np.asarray(spectrum)
-            # display spectrum with title
-            
-            
             data = self.ms_object.get_spectrum(index)
             self.data_array = np.array(data)
             self.update_plot(data, position)
-            
-    def plot_spectrum(self, spectrum, title):
-        self.axes.plot(spectrum[0],spectrum[1])
-        #self.axes.plot(*spectrum)
-        self.axes.set_title(title)
         
     # creates plot from passed data
     def plot(self, data = None, position = None):
@@ -600,6 +563,7 @@ class SelectionWindow(QWidget):
         """
         Exports the current spectrum data to csv
         """
+        import csv
         
         """dialog = QFileDialog()
         file = dialog.getSaveFileName(filter = "*.csv")"""
