@@ -26,15 +26,16 @@ class Maldi_MS():
     
     Attributes
     ----------
-    parser : class ImzMLParser
+    p : class ImzMLParser
         This is the result of the method ImzMLParser('NN.imzML')
     spectra : list
-        A list of lists containing two ndarrays: m/z and intensity
+        A list of sublists containing two ndarrays: m/z and intensity
+    norm_spectra : list
+        A list of sublists containing normalized spectra
+    is_norm : boolean
+        re there normalized spectra?
     coordinates : list
         A list of tuples containing the coordinates (x, y, z)
-    samplepoints : list
-        list of the indices of the spectra for the calculation of the mean
-        spectrum
     metadata : dict
         A nested dictionary with the metadata of the measurement
     num_spectra : int
@@ -42,23 +43,25 @@ class Maldi_MS():
 
     Methods
     -------
-    __init__(filename)
+    __init__(filename:str)
         class constructor
-    check_i(i)
+    check_i(i:int)
         check whether i is in the interval [0, num_spectra-1]
-    get_spectrum(i)
+    normalize(self, norm:str, mz0:float = 256.777, tol:float = 0.003)
+        normalize the spectra by different methods: tic, rms, median, peak
+    get_spectrum(i:int)
         get a list with m/z and intensity of spectrum[i]
     get_all_spectra()
         get a list with all spectra
-    plot_spectrum(i)
+    plot_spectrum(i:int)
         plot spectrum[i] with matplotlib.pyplot
-    get_num_spec()
+    get_num_spectra()
         get the number of spectra
-    get_index(y, x)
+    get_index(y:int, x:int)
         get the index of the spectrum at coordinates (x, y, 1)
-    get_coordinates(i)
+    get_coordinates(i:int)
         get the coordinates (x, y, 1) of spectrum[i]
-    get_ion_image(mz, tol)
+    get_ion_image(mz:float, tol:float)
         get a 2D ndarray with an ion image at m/z +/- tol
     get_tic()
         get the total ion current (tic) of all spectra
@@ -66,10 +69,13 @@ class Maldi_MS():
         get a string of the metadata in JSON format
     get_metadata()
         get a dictionary with selected metadata
+    getionimage_norm(self, p, mz_value, tol=0.1, z=1, reduce_func=sum)
+        Get an image representation of the intensity distribution
+        of the ion with specified m/z value.
     """
 
 
-    def __init__(self, filename):
+    def __init__(self, filename:str):
         """
         class constructor
         
@@ -98,7 +104,7 @@ class Maldi_MS():
         self.num_spectra = len(self.coordinates)        # number of spectra
 
 
-    def check_i(self, i):
+    def check_i(self, i:int):
         """
         check whether index i is in the interval [0, num_spectra-1]
 
@@ -128,7 +134,7 @@ class Maldi_MS():
         return i
 
 
-    def normalize(self, norm):
+    def normalize(self, norm:str, mz0:float = 256.777, tol:float = 0.003):
         self.norm_spectra = []
 
         if norm == 'none':
@@ -168,9 +174,32 @@ class Maldi_MS():
                 intensities2 /= median1
                 self.norm_spectra.append([mz2, intensities2])
             self.is_norm = True
+        elif norm == 'peak':
+            for spectrum in self.spectra:
+                mz1, intensities1 = spectrum
+
+                # First step: define an interval on the abscissa
+                filter1 = mz1 >= (mz0 - tol)
+                filter2 = mz1 <= (mz0 + tol)
+                filter3 = np.logical_and(filter1, filter2)
+
+                # Second step: calculate a factor for normalization
+                if np.any(filter3):         # peak found
+                    maximum = intensities1[filter3].max()
+                    if maximum > 0.0:
+                        factor = 100.0 / maximum
+                    else:                   # only zeros found
+                        factor = 0.0
+                else:                       # nothing found
+                    factor = 0.0
+
+                # Third step: normalize the spectrum
+                intensities2 = intensities1 * factor
+                self.norm_spectra.append([mz1, intensities2])
+            self.is_norm = True
 
 
-    def get_spectrum(self, i):
+    def get_spectrum(self, i:int):
         """
         get a list with m/z and intensity of spectrum[i]
 
@@ -213,7 +242,7 @@ class Maldi_MS():
             return self.spectra
 
 
-    def plot_spectrum(self, i):
+    def plot_spectrum(self, i:int):
         """
         plot spectrum[i] with matplotlib.pyplot
 
@@ -246,7 +275,7 @@ class Maldi_MS():
         return self.num_spectra
 
 
-    def get_index(self, y, x):
+    def get_index(self, y:int, x:int):
         """
         get the index of the spectrum at coordinates (x, y, 1)
 
@@ -272,7 +301,7 @@ class Maldi_MS():
             return -1
 
 
-    def get_coordinates(self, i):
+    def get_coordinates(self, i:int):
         """
         get the coordinates (x, y, 1) of spectrum[i]
 
@@ -292,7 +321,7 @@ class Maldi_MS():
         return self.coordinates[i]
 
 
-    def get_ion_image(self, mz, tol=0.1):
+    def get_ion_image(self, mz:float, tol:float = 0.1):
         """
         get a 2D numpy.ndarray with a single ion image at m/z +/- tol
 
