@@ -142,51 +142,55 @@ class Maldi_MS():
             self.is_norm = False
         elif norm == 'tic':               # Total ion current = Mean
             for spectrum in self.spectra:
-                mz1, intensities1 = spectrum
-                filter = intensities1 != 0.0
-                mz2 = mz1[filter]
-                intensities2 = intensities1[filter]
+                mz = spectrum[0]
+                intensities = np.copy(spectrum[1])
 
+                filter = intensities != 0.0
+                intensities2 = intensities[filter]
                 tic = np.mean(intensities2)
-                intensities2 /= tic
-                self.norm_spectra.append([mz2, intensities2])
+
+                intensities /= tic
+                self.norm_spectra.append([mz, intensities])
             self.is_norm = True
         elif norm == 'rms':               # Root mean square = Vector norm
             for spectrum in self.spectra:
-                mz1, intensities1 = spectrum
-                filter = intensities1 != 0.0
-                mz2 = mz1[filter]
-                intensities2 = intensities1[filter]
+                mz = spectrum[0]
+                intensities = np.copy(spectrum[1])
 
+                filter = intensities != 0.0
+                intensities2 = intensities[filter]
                 square1 = np.square(intensities2)
                 mean1 = np.mean(square1)
                 rms = np.sqrt(mean1)
-                intensities2 /= rms
-                self.norm_spectra.append([mz2, intensities2])
+
+                intensities /= rms
+                self.norm_spectra.append([mz, intensities])
             self.is_norm = True
         elif norm == 'median':
             for spectrum in self.spectra:
-                mz1, intensities1 = spectrum
-                filter = intensities1 != 0.0
-                mz2 = mz1[filter]
-                intensities2 = intensities1[filter]
+                mz = spectrum[0]
+                intensities = np.copy(spectrum[1])
 
+                filter = intensities != 0.0
+                intensities2 = intensities[filter]
                 median1 = np.median(intensities2)
-                intensities2 /= median1
-                self.norm_spectra.append([mz2, intensities2])
+
+                intensities /= median1
+                self.norm_spectra.append([mz, intensities])
             self.is_norm = True
         elif norm == 'peak':
             for spectrum in self.spectra:
-                mz1, intensities1 = spectrum
+                mz = spectrum[0]
+                intensities = np.copy(spectrum[1])
 
                 # First step: define an interval on the abscissa
-                filter1 = mz1 >= (mz0 - tol)
-                filter2 = mz1 <= (mz0 + tol)
+                filter1 = mz >= (mz0 - tol)
+                filter2 = mz <= (mz0 + tol)
                 filter3 = np.logical_and(filter1, filter2)
 
                 # Second step: calculate a factor for normalization
                 if np.any(filter3):         # peak found
-                    maximum = intensities1[filter3].max()
+                    maximum = intensities[filter3].max()
                     if maximum > 0.0:
                         factor = 100.0 / maximum
                     else:                   # only zeros found
@@ -195,8 +199,8 @@ class Maldi_MS():
                     factor = 0.0
 
                 # Third step: normalize the spectrum
-                intensities2 = intensities1 * factor
-                self.norm_spectra.append([mz1, intensities2])
+                intensities *= factor
+                self.norm_spectra.append([mz, intensities])
             self.is_norm = True
             self.norm_type += f" {mz0}"
 
