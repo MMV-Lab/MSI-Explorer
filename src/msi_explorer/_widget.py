@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import (QHBoxLayout, QPushButton, QWidget, QComboBox, QLabel, QVBoxLayout,
-                            QScrollArea, QLineEdit, QFrame, QMessageBox, QApplication)
+                            QScrollArea, QLineEdit, QFrame, QMessageBox, QApplication, QGridLayout)
 from qtpy.QtCore import Qt
 
 if TYPE_CHECKING:
@@ -59,6 +59,7 @@ class MSI_Explorer(QWidget):
         label_correction.setToolTip(label_correction_tooltip)
         label_noise_reduction = QLabel('noise reduction:')
         label_roi = QLabel('ROI')
+        self.label_reference = QLabel('reference:')
 
         # Buttons
         btn_load_imzml = QPushButton('Load imzML')
@@ -71,6 +72,7 @@ class MSI_Explorer(QWidget):
         self.btn_view_metadata.clicked.connect(self._open_metadata)
         btn_load_imzml.clicked.connect(self._open_file)
         self.btn_analyze_roi.clicked.connect(self._analyze)
+        self.btn_execute_preprocessing.clicked.connect(self.preprocess)
         btn_minimize_preprocessing.clicked.connect(self._hide_preprocessing)
         self.btn_maximize_preprocessing.clicked.connect(self._show_preprocessing)
         
@@ -79,14 +81,19 @@ class MSI_Explorer(QWidget):
         self.btn_analyze_roi.setEnabled(False)
         
         # Comboboxes
-        combobox_scale = QComboBox()
-        combobox_scale.addItems(['original', 'normalized'])
+        self.combobox_scale = QComboBox()
+        self.combobox_scale.addItems(['original', 'tic','rms','median', 'peak'])
+        self.combobox_scale.currentTextChanged.connect(self.toggle_reference_selection)
         combobox_roi = QComboBox()
         
         
         # Lineedits
         lineedit_correction = QLineEdit()
         lineedit_noise_reduction = QLineEdit()
+        self.lineedit_reference = QLineEdit()
+        self.lineedit_reference.setPlaceholderText("M/Z")
+        self.lineedit_reference.hide()
+        self.label_reference.hide()
         
         ### Variables
         preprocessing_minimized = False
@@ -124,9 +131,11 @@ class MSI_Explorer(QWidget):
         self.preprocessing_frame.layout().addWidget(preprocessing_header)
         
         preprocessing_scale = QWidget()
-        preprocessing_scale.setLayout(QHBoxLayout())
-        preprocessing_scale.layout().addWidget(label_scale)
-        preprocessing_scale.layout().addWidget(combobox_scale)
+        preprocessing_scale.setLayout(QGridLayout())
+        preprocessing_scale.layout().addWidget(label_scale,0,0)
+        preprocessing_scale.layout().addWidget(self.combobox_scale,0,1)
+        preprocessing_scale.layout().addWidget(self.label_reference,1,0)
+        preprocessing_scale.layout().addWidget(self.lineedit_reference,1,1)
         
         self.preprocessing_frame.layout().addWidget(preprocessing_scale)
         
@@ -218,9 +227,10 @@ class MSI_Explorer(QWidget):
         x = int(self.ms_object.get_metadata()['max count x'] / 2)
         y = int(self.ms_object.get_metadata()['max count y'] / 2)
         index = self.ms_object.get_index(y, x)
-        position = "{}, #{}".format((x,y), index)
+        title = "Original {}, #{}".format((x,y), index)
         self.selection_window.set_data(self.ms_object, self.ms_object.get_spectrum(index))
-        self.selection_window.update_plot(self.selection_window.data_array, position = position)
+        self.selection_window.plot_spectrum(title = title)
+        #self.selection_window.update_plot(self.selection_window.data_array, position = position)
         self.selection_window.display_image_from_plot()
         
         # enable buttons after loading data
@@ -234,6 +244,16 @@ class MSI_Explorer(QWidget):
         self.selection_window.btn_true_mean_spectrum.setEnabled(True)
         self.selection_window.btn_export_spectrum_data.setEnabled(True)
         self.selection_window.btn_export_spectrum_plot.setEnabled(True)
+        QApplication.restoreOverrideCursor()
+        
+    def preprocess(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        normalization_method = self.combobox_scale.currentText()
+        if self.lineedit_reference.text() != '':
+            mz = float(self.lineedit_reference.text())
+            self.ms_object.normalize(normalization_method, mz)
+        else:
+            self.ms_object.normalize(normalization_method)
         QApplication.restoreOverrideCursor()
 
     def _analyze(self):
@@ -256,6 +276,14 @@ class MSI_Explorer(QWidget):
         """
         self.preprocessing_frame.show()
         self.btn_maximize_preprocessing.hide()
+        
+    def toggle_reference_selection(self, metric):
+        if metric == 'peak':
+            self.label_reference.show()
+            self.lineedit_reference.show()
+        else:
+            self.label_reference.hide()
+            self.lineedit_reference.hide()
         
         
         
