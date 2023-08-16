@@ -546,15 +546,22 @@ class SelectionWindow(QWidget):
         """
         Exports the current spectrum as [insert file format here]
         """
-        layer = self.viewer.layers[self.viewer.layers.index("main view")].colormap
+        file = save_dialog(self, "*.jpg")
+        if file[0] == "":
+            # No file path + name chosen
+            return 
+        
+        
+        self.canvas.print_figure(file[0])
+        
+        """layer = self.viewer.layers[self.viewer.layers.index("main view")].colormap
         print("colorbar: {}".format(dir(layer.colorbar)))
         print("colors: {}".format(dir(layer.colors)))
         print("constructs: {}".format(dir(layer.construct)))
         print("controls: {}".format(dir(layer.controls)))
-        print("interpolation: {}".format(dir(layer.interpolation)))
+        print("interpolation: {}".format(dir(layer.interpolation)))"""
         #self.viewer.add_labels(self.viewer.layers[self.viewer.layers.index("main view")].colormap.colorbar, name = "colorbar")
-        print("dummy for later")
-        pass
+        print("image has been saved!")
 
     
 
