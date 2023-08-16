@@ -6,6 +6,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
 import napari
 import csv
+from matplotlib.widgets import SpanSelector
 
 from ._database import DatabaseWindow
 from ._maldi_ms_data import Maldi_MS
@@ -56,7 +57,7 @@ class SelectionWindow(QWidget):
         Replaces canvas with fully zoomed out canvas
     select_database()
         Opens a [DatabaseWindow]
-    calculate_image(mz, tolerance)
+    display_image(mz, tolerance)
         Replaces/Adds new image layer with selected m/z & tolerance
     set_data()
         Set MSObject and the current spectrum data as attributes
@@ -83,18 +84,10 @@ class SelectionWindow(QWidget):
         self.setLayout(QVBoxLayout())
 
         #self.plot()
-        figure = Figure(figsize=(6,6))
-        axes = figure.add_subplot(111)
-        axes.tick_params(axis="x")
-        axes.tick_params(axis="y")
-        axes.set_xlabel("m/z")
-        axes.set_ylabel("intensity")
-        
-        axes.plot()
-        self.axes = axes
-        canvas = FigureCanvas(figure)
+        self.canvas = self.initialize_plot()
         
         self.metabolites = {}
+        self.mean_spectra = {}
         
         ### QObjects
         
@@ -176,8 +169,9 @@ class SelectionWindow(QWidget):
         self.combobox_mz = QComboBox()
         self.combobox_mz.setMinimumWidth(100)
         self.combobox_mz.setMaximumWidth(200)
+        self.combobox_mz.setInsertPolicy(QComboBox.InsertAlphabetically)
         
-        self.combobox_mz.currentTextChanged.connect(self.calculate_image)
+        self.combobox_mz.currentTextChanged.connect(self.display_image)
         self.combobox_mz.currentTextChanged.connect(self.display_description)
         
         # Lines
@@ -203,7 +197,7 @@ class SelectionWindow(QWidget):
         
         ### Organize objects via widgets
         
-        self.layout().addWidget(canvas)
+        self.layout().addWidget(self.canvas)
         
         visual_buttons = QWidget()
         visual_buttons.setLayout(QHBoxLayout())
@@ -272,20 +266,11 @@ class SelectionWindow(QWidget):
             )
             if index == -1:
                 return
-            normalized = f'Normalized ()'
-            title = f"{'Original:' if self.ms_object.is_norm else normalized} \
-            {(round(position[0]), round(position[1]))}, #\
-            {self.ms_object.get_index(round(position[0]), round(position[1]))}"
-            #position = "{}, #{}".format((round(position[0]),round(position[1])),
-            #                            self.ms_object.get_index(round(position[0]), round(position[1])))
+            normalized = f'Normalized ({self.ms_object.norm_type})'
+            title = f"{normalized if self.ms_object.is_norm else 'Original'} {(round(position[0]), round(position[1]))}, #{self.ms_object.get_index(round(position[0]), round(position[1]))}"
             spectrum = self.ms_object.get_spectrum(index)
-            self.current_spectrum_array = np.asarray(spectrum)
-            # display spectrum with title
-            
-            
-            data = self.ms_object.get_spectrum(index)
-            self.data_array = np.array(data)
-            self.update_plot(data, title)
+            self.current_spectrum = np.asarray(spectrum)
+            self.plot_spectrum(title = title)
         
     def keyPressEvent(self, event):
         """
@@ -305,122 +290,57 @@ class SelectionWindow(QWidget):
             )
             if index == -1:
                 return
-            normalized = f'Normalized ()'
-            title = f"{'Original:' if self.ms_object.is_norm else normalized} \
-            {(round(position[0]), round(position[1]))}, #\
-            {self.ms_object.get_index(round(position[0]), round(position[1]))}"
-            #position = "{}, #{}".format((round(self.viewer.cursor.position[0]),round(self.viewer.cursor.position[1])),
-            #                            self.ms_object.get_index(round(self.viewer.cursor.position[0]), round(self.viewer.cursor.position[1])))
+            normalized = f'Normalized ({self.ms_object.norm_type})'
+            title = f"{normalized if self.ms_object.is_norm else 'Original:'} {(round(position[0]), round(position[1]))}, #{self.ms_object.get_index(round(position[0]), round(position[1]))}"
             spectrum = self.ms_object.get_spectrum(index)
-            self.current_spectrum_array = np.asarray(spectrum)
-            # display spectrum with title
+            self.current_spectrum = np.asarray(spectrum)
+            self.plot_spectrum(title = title)
             
-            
-            data = self.ms_object.get_spectrum(index)
-            self.data_array = np.array(data)
-            self.update_plot(data, position)
-            
-    def plot_spectrum(self, spectrum, title):
-        self.axes.plot(spectrum[0],spectrum[1])
-        #self.axes.plot(*spectrum)
-        self.axes.set_title(title)
-        
-    # creates plot from passed data
-    def plot(self, data = None, position = None):
-        """
-        Creates a canvas for a given spectrum [data]
-        
-        If the argument `data` is not passed in, an empty canvas is produced
-        
-        Parameters
-        ----------
-        data : list, optional
-            The numpy arrays holding x and y coordinates (default is None)
-        position : tuple, optional
-            Position of the selected spectrum
-            
-        Returns
-        -------
-        canvas
-            A canvas displaying the passed spectrum
-        """
-        if not position is None:
-            self.position = position
-        elif hasattr(self,"position"):
-            position = self.position
-            
-        fig = Figure(figsize=(6,6))
-        #fig.patch.set_facecolor("#262930")
-        axes = fig.add_subplot(111)
-        #axes.set_facecolor("#262930")
-        """axes.spines["bottom"].set_color("white")
-        axes.spines["top"].set_color("white")
-        axes.spines["right"].set_color("white")
-        axes.spines["left"].set_color("white")
-        axes.xaxis.label.set_color("white")
-        axes.yaxis.label.set_color("white")"""
+    def initialize_plot(self):
+        figure = Figure(figsize=(6,6))
+        axes = figure.add_subplot(111)
         axes.tick_params(axis="x")
         axes.tick_params(axis="y")
         axes.set_xlabel("m/z")
         axes.set_ylabel("intensity")
-        """axes.tick_params(axis="x", colors="white")
-        axes.tick_params(axis="y", colors="white")"""
         
-        if data is None:
-            axes.plot()
-        else:
-            axes.plot(data[0],data[1])
-            axes.set_title(position)
-            
-        canvas = FigureCanvas(fig)
-            
+        axes.plot()
+        self.axes = axes
+        canvas = FigureCanvas(figure)
+        
         def onselect(min, max):
-            """
-            Triggers update of plot to display only data between min and max
-            
-            Parameters
-            ----------
-            min : int
-                Minimum m/z value to be displayed
-            max : int
-                Maximum m/z value to be displayed
-            """
-            if not hasattr(self, 'data_array'):
+            if not hasattr(self, 'current_spectrum'):
                 return
-                
-            min_bound = self.data_array[:,self.data_array[0,:] >= min]
-            both_bound = min_bound[:,min_bound[0,:] <= max]
-            self.update_plot(both_bound)
-    
-        from matplotlib.widgets import SpanSelector
-        self.selector = SpanSelector(axes, onselect = onselect, direction = "horizontal")
-        self.canvas = canvas
+            min_bound_data = self.current_spectrum[:, self.current_spectrum[0,:] >= min]
+            selected_data = min_bound_data[:, min_bound_data[0,:] <= max]
+            self.plot_spectrum(selected_data)
+        
+        self.selector = SpanSelector(axes, onselect = onselect, direction = 'horizontal')
         return canvas
-    
-    def update_plot(self, data, position = None):
-        """
-        Replaces displayed canvas with new canvas created from [data]
         
-        Parameters
-        ----------
-        data : list
-            The numpy arrays holding x and y coordinates
-        position : tuple, optional
-            Position of the selected spectrum
-        """
-        self.displayed_data = np.array(data)
-        old_canvas = self.canvas
-        new_canvas = self.plot(data, position)
-        self.layout().replaceWidget(old_canvas, new_canvas)
-        #self.layout().itemAt(0).widget().layout().removeWidget(old_canvas)
-        old_canvas.hide()
-        #self.layout().itemAt(0).widget().layout().insertWidget(0,new_canvas)
-        
+    def plot_spectrum(self, spectrum = None, title = None):
+        if title is None:
+            title = self.axes.get_title()
+        self.axes.clear()
+        if spectrum is None:
+            spectrum = self.current_spectrum
+        self.axes.plot(*spectrum)
+        self.axes.set_title(title)
+        self.canvas.draw()
+
     def reset_plot(self):
         """
         Replaces canvas with fully zoomed out canvas
         """
-        self.update_plot(self.data_array,)
+        self.plot_spectrum(self.current_spectrum)
+        
+    def get_plot_limits(self):
+        xmargin, _ = self.axes.margins()
+        low, high = self.axes.get_xlim()
+        interval = (high - low) / (1 + xmargin * 2)
+        data_low = (high - low - interval) / 2 + low
+        data_high = data_low + interval
+        return data_low, data_high
         
     def select_database(self):
         """
@@ -429,7 +349,7 @@ class SelectionWindow(QWidget):
         self.database_window = DatabaseWindow(self)
         self.database_window.show()
         
-    def calculate_image(self, mz, tolerance = None):
+    def display_image(self, mz, tolerance = None):
         """
         Replaces/Adds new image layer with selected m/z & tolerance
         
@@ -472,17 +392,14 @@ class SelectionWindow(QWidget):
             Arrays of X/Y coordinates of spectrum
         """
         self.ms_object = ms_data
-        self.data_array = np.array(data)
-        self.displayed_data = self.data_array
+        self.current_spectrum = np.array(data)
         
     def update_mzs(self):
         """
         Updates the m/z values displayed in the combobox to match those selected from the databases
         """
-        for i in range(0,self.combobox_mz.count()):
-            self.combobox_mz.removeItem(0)
-        for i in range(0, len(self.metabolites)):
-            self.combobox_mz.addItem(list(self.metabolites)[i])
+        self.combobox_mz.clear()
+        self.combobox_mz.addItems(list(self.metabolites))
             
     def display_description(self, mz):
         """
@@ -515,9 +432,9 @@ class SelectionWindow(QWidget):
         self.combobox_mz.clear()
         for entry in self.metabolites:
             if (
-                filter_text in str(entry)
-                or filter_text in self.metabolites[str(entry)][0]
-                or filter_text in self.metabolites[str(entry)][1]
+                filter_text.lower() in str(entry).lower()
+                or filter_text.lower() in self.metabolites[str(entry)][0].lower()
+                or filter_text.lower() in self.metabolites[str(entry)][1].lower()
                 ):
                 self.combobox_mz.addItem(entry)
             
@@ -526,14 +443,12 @@ class SelectionWindow(QWidget):
         """
         Displays image of the currently displayed m/z range in the plot
         """
-        if not hasattr(self, 'displayed_data'):
+        if not hasattr(self, 'current_spectrum'):
             return
-        print("left bound: {}, right bound: {}".format(self.displayed_data[0,0],
-                                                       self.displayed_data[0,-1]))
-        tolerance = (self.displayed_data[0,-1] - self.displayed_data[0,0]) / 2
-        mz = (self.displayed_data[0,-1] + self.displayed_data[0,0]) / 2
-        print("mz: {}, tolerance: {}".format(mz, tolerance))
-        self.calculate_image(mz, tolerance)
+        low, high = self.get_plot_limits()
+        tolerance = (high - low) / 2
+        mz = (high + low) / 2
+        self.display_image(mz, tolerance)
             
     def select_roi(self):
         self.btn_roi_mean.show()
@@ -564,23 +479,26 @@ class SelectionWindow(QWidget):
         worker.start()
         
     def display_roi_mean_spectrum(self, spectrum):
-        self.data_array = np.array(spectrum)
-        self.displayed_data = self.data_array
-        self.update_plot(spectrum, position = "ROI mean")
+        self.current_spectrum = spectrum
+        normalized = f'Normalized ({self.ms_object.norm_type})'
+        title = f"{normalized if self.ms_object.is_norm else 'Original'} ROI mean"
+        self.plot_spectrum(spectrum, title)
         
         
     def calculate_true_mean_spectrum(self):
         """
         Calculates the true mean spectrum if necessary, then calls for the spectrum to be displayed
         """
-    
-        if not hasattr(self, 'true_mean_spectrum'):
-            print('its doing it!')
+        if not self.ms_object.norm_type in self.mean_spectra:
             worker = get_true_mean_spec(self.ms_object)
             worker.returned.connect(self.display_true_mean_spectrum)
             worker.start()
         else:
-            self.update_plot(self.true_mean_spectrum, position = "true mean")
+            spectrum = self.mean_spectra[self.ms_object.norm_type]
+            normalized = f'Normalized ({self.ms_object.norm_type})'
+            title = f"{normalized if self.ms_object.is_norm else 'Original'} true mean"
+            self.plot_spectrum(spectrum, title)
+            self.current_spectrum = spectrum
         
     def display_true_mean_spectrum(self, spectrum):
         """
@@ -591,10 +509,12 @@ class SelectionWindow(QWidget):
         spectrum : list
             true mean spectrum
         """
-        self.true_mean_spectrum = spectrum
-        self.data_array = np.array(spectrum)
-        self.displayed_data = self.data_array
-        self.update_plot(spectrum, position = "true mean")
+        spectrum = np.asarray(spectrum)
+        self.mean_spectra[self.ms_object.norm_type] = spectrum
+        self.current_spectrum = spectrum
+        normalized = f'Normalized ({self.ms_object.norm_type})'
+        title = f"{normalized if self.ms_object.is_norm else 'Original'} true mean"
+        self.plot_spectrum(spectrum, title)
         
     def export_spectrum_data(self):
         """
@@ -612,11 +532,14 @@ class SelectionWindow(QWidget):
         writer = csv.writer(csvfile)
         writer.writerow(["m/z","intensity"])
         
-        for i in range(len(self.displayed_data[0])):
-            data = [self.displayed_data[0,i]]
-            data.append(self.displayed_data[1,i])
+        low, high = self.get_plot_limits()
+        min_bound_data = self.current_spectrum[:, self.current_spectrum[0,:] >= low]
+        displayed_data = min_bound_data[:, min_bound_data[0,:] <= high]
+        for i in range(len(displayed_data[0])):
+            data = [displayed_data[0,i],displayed_data[1,i]]
             writer.writerow(data)
         csvfile.close()
+        print("export comlete")
         
     
     def export_spectrum_plot(self):
