@@ -137,6 +137,7 @@ class Maldi_MS():
 
     def normalize(self, norm:str, mz0:float = 256.777, tol:float = 0.003):
         self.norm_spectra = []
+        self.norm_type = norm # Lennart
         if norm == 'original': # Lennart
             self.is_norm = False
         elif norm == 'tic':               # Total ion current = Mean
@@ -197,7 +198,7 @@ class Maldi_MS():
                 intensities2 = intensities1 * factor
                 self.norm_spectra.append([mz1, intensities2])
             self.is_norm = True
-        self.norm_type = norm # Lennart
+            self.norm_type += f" {mz0}"
 
 
     def get_spectrum(self, i:int):
