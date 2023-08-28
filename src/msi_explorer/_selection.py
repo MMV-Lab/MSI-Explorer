@@ -479,6 +479,7 @@ class SelectionWindow(QWidget):
         worker.start()
         
     def display_roi_mean_spectrum(self, spectrum):
+        spectrum = np.asarray(spectrum)
         self.current_spectrum = spectrum
         normalized = f'Normalized ({self.ms_object.norm_type})'
         title = f"{normalized if self.ms_object.is_norm else 'Original'} ROI mean"
