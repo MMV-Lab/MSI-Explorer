@@ -113,6 +113,15 @@ class DatabaseWindow(QWidget):
         """
         create_new_database(self.db_directory)
         self._read_database_files()
+        
+    def hide_database(self):
+        pass
+    
+    def change_path(self):
+        pass
+    
+    def show_all_databasese(self):
+        pass
     
     def _delete_database(self):
         """
