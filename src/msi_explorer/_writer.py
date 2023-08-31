@@ -64,6 +64,14 @@ def create_new_database(path):
     msg.setText("New csv file has been created")
     msg.exec()
     
+def write_file(path, data, append=False, newline=True):
+    if append:
+        mode = 'a'
+    else:
+        mode = 'w'
+    f = open(path, mode)
+    f.write(f"{data}\n")
+    f.close()
 
 """def write_single_image(path: str, data: Any, meta: dict) -> List[str]:
     ""Writes a single image layer""

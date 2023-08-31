@@ -1,8 +1,8 @@
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QPushButton
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QPushButton, QFileDialog
 import csv, os
 
-from ._writer import create_new_database
-from ._reader import open_dialog
+from ._writer import create_new_database, write_file
+from ._reader import open_dialog, select_directory
 
 class DatabaseWindow(QWidget):
     """
@@ -39,25 +39,30 @@ class DatabaseWindow(QWidget):
         self.setLayout(QVBoxLayout())
         
         self.parent = parent
-        self.db_directory = os.path.dirname(__file__) + "/databases/"
-        
+        self.config_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),"databases.conf")
+        with open(self.config_file) as f:
+            self.db_directory = f.readline()
+        if self.db_directory == "":
+            self.db_directory = f"{os.path.dirname(os.path.abspath(__file__))}/"
+            
+        self.hidden_databases_conf_file = os.path.join(os.path.dirname(os.path.abspath(__file__)),"hidden_databases.conf")
+            
         ### QObjects
         # Label
-        self.label_database = QLabel("database")
-        
-        # Checkboxes
-        checkboxes = []
-        for file in os.listdir(self.db_directory):
-            checkboxes.append(QCheckBox(os.path.splitext(file)[0]))
+        self.label_database = QLabel("Databases")
         
         # Buttons
         btn_add_database = QPushButton("Add")
-        btn_delete_database = QPushButton("Delete")
         btn_confirm = QPushButton("Confirm")
+        btn_set_path = QPushButton("Set path")
+        btn_hide_database = QPushButton("Hide")
+        btn_show_all_databases = QPushButton("Show all")
         
-        btn_add_database.clicked.connect(self._add_database)        
-        btn_delete_database.clicked.connect(self._delete_database)        
+        btn_add_database.clicked.connect(self._add_database)  
         btn_confirm.clicked.connect(self._return_values)
+        btn_set_path.clicked.connect(self.change_path)
+        btn_hide_database.clicked.connect(self.hide_database)
+        btn_show_all_databases.clicked.connect(self.show_all_databases)
         
         ### Organize objects via widgets
         self.data_frame = QFrame()
@@ -70,18 +75,19 @@ class DatabaseWindow(QWidget):
                                    )
         
         self.data_frame.layout().addWidget(self.label_database)
-        for checkbox in checkboxes:
-            self.data_frame.layout().addWidget(checkbox)
         
         self.buttons_widget = QWidget()
         self.buttons_widget.setLayout(QHBoxLayout())
         self.buttons_widget.layout().addWidget(btn_add_database)
-        self.buttons_widget.layout().addWidget(btn_delete_database)
+        self.buttons_widget.layout().addWidget(btn_hide_database)
+        self.buttons_widget.layout().addWidget(btn_set_path)
+        self.buttons_widget.layout().addWidget(btn_show_all_databases)
         self.buttons_widget.layout().addWidget(btn_confirm)
         
         self.data_frame.layout().addWidget(self.buttons_widget)
         
         self.layout().addWidget(self.data_frame)
+        self._read_database_files()
         
     def _read_database_files(self):
         """
@@ -96,9 +102,19 @@ class DatabaseWindow(QWidget):
                                    "border-color: rgb(10, 10, 10);"
                                    )
         new_data_frame.layout().addWidget(self.label_database)
+        with open(self.hidden_databases_conf_file) as f:
+            self.hidden_databases = f.readlines()
         
+        self.checkboxes = []
         for file in os.listdir(self.db_directory):
+            if not file.endswith(".csv"):
+                continue
+            print(f"found {file}")
+            if f"{file}\n" in self.hidden_databases:
+                print(f"skipping {file}")
+                continue
             checkbox = QCheckBox(os.path.splitext(file)[0])
+            self.checkboxes.append(checkbox)
             new_data_frame.layout().addWidget(checkbox)
             
         new_data_frame.layout().addWidget(self.buttons_widget)
@@ -115,23 +131,21 @@ class DatabaseWindow(QWidget):
         self._read_database_files()
         
     def hide_database(self):
-        pass
+        for checkbox in self.checkboxes:
+            if checkbox.isChecked():
+                write_file(self.hidden_databases_conf_file, f"{checkbox.text()}.csv", True)
+        self._read_database_files()
     
     def change_path(self):
-        pass
-    
-    def show_all_databasese(self):
-        pass
-    
-    def _delete_database(self):
-        """
-        Opens a file dialog in the database directory. Deletes selected csv file
-        """
-        filepath = open_dialog(self, filetype = "*csv", directory = self.db_directory)
-        try:
-            os.remove(filepath)
-        except FileNotFoundError:
+        path = f"{select_directory(self)}/"
+        if path == "/":
             return
+        self.db_directory = path
+        write_file(self.config_file, path, newline=False)
+        self._read_database_files()
+    
+    def show_all_databases(self):
+        write_file(self.hidden_databases_conf_file, "")
         self._read_database_files()
     
     def _return_values(self):
