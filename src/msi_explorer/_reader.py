@@ -23,6 +23,11 @@ def open_dialog(parent, filetype = "", directory = ""):
     filepath = dialog.getOpenFileName(parent, "Select imzML file",filter = filetype, directory = directory)[0]
     return filepath
 
+def select_directory(parent):
+    dialog = QFileDialog()
+    filepath = dialog.getExistingDirectory(parent)
+    return filepath
+
 def napari_get_reader(path):
     """
     Determines reader type for file(s) at [path]

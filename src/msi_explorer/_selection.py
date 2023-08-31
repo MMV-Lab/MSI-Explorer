@@ -540,7 +540,7 @@ class SelectionWindow(QWidget):
             data = [displayed_data[0,i],displayed_data[1,i]]
             writer.writerow(data)
         csvfile.close()
-        print("export comlete")
+        print("export complete")
         
     
     def export_spectrum_plot(self):
