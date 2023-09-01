@@ -1,8 +1,9 @@
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QPushButton, QFileDialog
-import csv, os
+import csv
+import os
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFrame, QLabel, QCheckBox, QPushButton
 
 from ._writer import create_new_database, write_file
-from ._reader import open_dialog, select_directory
+from ._reader import select_directory
 
 class DatabaseWindow(QWidget):
     """

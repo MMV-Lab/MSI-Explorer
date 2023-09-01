@@ -1,10 +1,11 @@
-from msi_explorer import Maldi_MS
 from qtpy.QtWidgets import QFileDialog
+from msi_explorer import Maldi_MS
 
-def open_dialog(parent, filetype = "", directory = ""):
+
+def open_dialog(parent, filetype="", directory=""):
     """
     Opens a dialog to select a file to open
-    
+
     Parameters
     ----------
     parent : QWidget
@@ -13,20 +14,24 @@ def open_dialog(parent, filetype = "", directory = ""):
         Only files of this filetype will be displayed
     directory : str
         Opens view at the specified directory
-        
+
     Returns
     -------
     str
         Path of the selected file
     """
     dialog = QFileDialog()
-    filepath = dialog.getOpenFileName(parent, "Select imzML file",filter = filetype, directory = directory)[0]
+    filepath = dialog.getOpenFileName(
+        parent, "Select imzML file", filter=filetype, directory=directory
+    )[0]
     return filepath
+
 
 def select_directory(parent):
     dialog = QFileDialog()
     filepath = dialog.getExistingDirectory(parent)
     return filepath
+
 
 def napari_get_reader(path):
     """
