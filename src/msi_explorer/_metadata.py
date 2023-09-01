@@ -117,12 +117,10 @@ class MetadataWindow(QWidget):
     
     def _add_line(self):
         """
-        Creates a new line with [is_empty] set to true, adds it to the [data_frame]
+        Creates a new line in the [data_frame] and inserts lineedits
         """
         key = QLineEdit()
-        #key.setPlaceholderText("Testkey")
         value = QLineEdit()
-        #value.setPlaceholderText("Testvalue")
         self.data_frame.setRowCount(self.data_frame.rowCount() + 1)
         self.data_frame.setCellWidget(self.row_index,0,key)
         self.data_frame.setCellWidget(self.row_index,1,value)
@@ -133,7 +131,7 @@ class MetadataWindow(QWidget):
 
     def _check_for_empty_line(self):
         """
-        Checks if the last line's [is_empty] property is True, otherwise calls [add_line]
+        Checks if any line's key and value text is blank, otherwise calls [add_line]
         """
         for row in range(self.first_manual_row, self.data_frame.rowCount()):
             if self.data_frame.cellWidget(row, 0).text() == '' and self.data_frame.cellWidget(row, 1).text() == '':
