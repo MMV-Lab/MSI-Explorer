@@ -55,7 +55,7 @@ def napari_get_reader(path):
         path = path[0]
 
     # if we know we cannot read the file, we immediately return None.
-    if not path.endswith(".imzML"):
+    if not path.lower().endswith(".imzml"):
         return None
 
     # otherwise we return the *function* that can read ``path``.

@@ -422,14 +422,24 @@ class Maldi_MS:
                 "max count of pixels x"
             ]
         except BaseException:
-            pass
+            try:
+                d["max count x"] = meta["scan_settings"]["scanSettings0"][
+                    "max count of pixels x"
+                ]
+            except BaseException:
+                pass
 
         try:
             d["max count y"] = meta["scan_settings"]["scansettings1"][
                 "max count of pixels y"
             ]
         except BaseException:
-            pass
+            try:
+                d["max count y"] = meta["scan_settings"]["scanSettings0"][
+                    "max count of pixels y"
+                ]
+            except BaseException:
+                pass
 
         try:
             d["pixel size x"] = meta["scan_settings"]["scansettings1"][

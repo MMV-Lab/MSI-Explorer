@@ -9,7 +9,6 @@ from qtpy.QtWidgets import (
     QComboBox,
     QLineEdit,
     QSizePolicy,
-    QVBoxLayout,
     QGridLayout,
 )
 
@@ -355,6 +354,7 @@ class SelectionWindow(QWidget):
         if spectrum is None:
             spectrum = self.current_spectrum
         self.axes.plot(*spectrum)
+        self.axes.ticklabel_format(useOffset=False)
         self.axes.set_title(title)
         self.canvas.draw()
 
