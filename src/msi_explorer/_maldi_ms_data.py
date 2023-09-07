@@ -13,17 +13,17 @@ Maldi_MS
 # Copyright © Peter Lampen, ISAS Dortmund, 2023
 # (07.02.2023)
 
-import numpy as np
-import matplotlib.pyplot as plt
 import json
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 from pyimzml.ImzMLParser import ImzMLParser, getionimage, _bisect_spectrum
-from bisect import bisect_left, bisect_right
 
-class Maldi_MS():
+
+class Maldi_MS:
     """
     A class to store Maldi-MS data.
-    
+
     Attributes
     ----------
     p : class ImzMLParser
@@ -74,38 +74,36 @@ class Maldi_MS():
         of the ion with specified m/z value.
     """
 
-
-    def __init__(self, filename:str):
+    def __init__(self, filename: str):
         """
         class constructor
-        
+
         Parameters
         ----------
         filename : str
             Path and file name of the imzML file
         """
 
-        if not os.path.isfile(filename):        # Check if the file exists
-            raise FileNotFoundError(filename, 'don\'t exist')
+        if not os.path.isfile(filename):  # Check if the file exists
+            raise FileNotFoundError(filename, "don't exist")
 
         p = ImzMLParser(filename)
         self.p = p
-        self.spectra = []           # empty list
+        self.spectra = []  # empty list
         self.norm_spectra = []
         self.is_norm = False
-        self.norm_type = 'original' # Lennart
+        self.norm_type = "original"  # Lennart
         self.coordinates = []
 
         for i, (x, y, z) in enumerate(p.coordinates):
             mz, intensities = p.getspectrum(i)
-            self.spectra.append([mz, intensities])      # list of lists
-            self.coordinates.append((x, y, z))          # list of tuples
+            self.spectra.append([mz, intensities])  # list of lists
+            self.coordinates.append((x, y, z))  # list of tuples
 
-        self.metadata = p.metadata.pretty()             # nested dictionary
-        self.num_spectra = len(self.coordinates)        # number of spectra
+        self.metadata = p.metadata.pretty()  # nested dictionary
+        self.num_spectra = len(self.coordinates)  # number of spectra
 
-
-    def check_i(self, i:int):
+    def check_i(self, i: int):
         """
         check whether index i is in the interval [0, num_spectra-1]
 
@@ -125,22 +123,22 @@ class Maldi_MS():
         try:
             i = int(i)
         except BaseException as err:
-            print('Error:', err)
+            print("Error:", err)
             i = 0
 
         # Is 0 <= i < self.num_spectra?
-        if i < 0: i = 0
+        if i < 0:
+            i = 0
         elif i >= self.num_spectra:
             i = self.num_spectra - 1
         return i
 
-
-    def normalize(self, norm:str, mz0:float = 256.777, tol:float = 0.003):
+    def normalize(self, norm: str, mz0: float = 256.777, tol: float = 0.003):
         self.norm_spectra = []
-        self.norm_type = norm # Lennart
-        if norm == 'original': # Lennart
+        self.norm_type = norm  # Lennart
+        if norm == "original":  # Lennart
             self.is_norm = False
-        elif norm == 'tic':               # Total ion current = Mean
+        elif norm == "tic":  # Total ion current = Mean
             for spectrum in self.spectra:
                 mz = spectrum[0]
                 intensities = np.copy(spectrum[1])
@@ -152,7 +150,7 @@ class Maldi_MS():
                 intensities /= tic
                 self.norm_spectra.append([mz, intensities])
             self.is_norm = True
-        elif norm == 'rms':               # Root mean square = Vector norm
+        elif norm == "rms":  # Root mean square = Vector norm
             for spectrum in self.spectra:
                 mz = spectrum[0]
                 intensities = np.copy(spectrum[1])
@@ -166,7 +164,7 @@ class Maldi_MS():
                 intensities /= rms
                 self.norm_spectra.append([mz, intensities])
             self.is_norm = True
-        elif norm == 'median':
+        elif norm == "median":
             for spectrum in self.spectra:
                 mz = spectrum[0]
                 intensities = np.copy(spectrum[1])
@@ -178,7 +176,7 @@ class Maldi_MS():
                 intensities /= median1
                 self.norm_spectra.append([mz, intensities])
             self.is_norm = True
-        elif norm == 'peak':
+        elif norm == "peak":
             for spectrum in self.spectra:
                 mz = spectrum[0]
                 intensities = np.copy(spectrum[1])
@@ -189,13 +187,13 @@ class Maldi_MS():
                 filter3 = np.logical_and(filter1, filter2)
 
                 # Second step: calculate a factor for normalization
-                if np.any(filter3):         # peak found
+                if np.any(filter3):  # peak found
                     maximum = intensities[filter3].max()
                     if maximum > 0.0:
                         factor = 100.0 / maximum
-                    else:                   # only zeros found
+                    else:  # only zeros found
                         factor = 0.0
-                else:                       # nothing found
+                else:  # nothing found
                     factor = 0.0
 
                 # Third step: normalize the spectrum
@@ -204,8 +202,7 @@ class Maldi_MS():
             self.is_norm = True
             self.norm_type += f" {mz0}"
 
-
-    def get_spectrum(self, i:int):
+    def get_spectrum(self, i: int):
         """
         get a list with m/z and intensity of spectrum[i]
 
@@ -227,7 +224,6 @@ class Maldi_MS():
         else:
             return self.spectra[i]
 
-
     def get_all_spectra(self):
         """
         get a list with all spectra
@@ -247,8 +243,7 @@ class Maldi_MS():
         else:
             return self.spectra
 
-
-    def plot_spectrum(self, i:int):
+    def plot_spectrum(self, i: int):
         """
         plot spectrum[i] with matplotlib.pyplot
 
@@ -261,12 +256,11 @@ class Maldi_MS():
         spectrum = self.get_spectrum(i)
         mz, intensities = spectrum
         plt.plot(mz, intensities)
-        plt.xlabel('m/z')
-        plt.ylabel('intensity')
-        title1 = 'Spectrum # %d' % (i)
+        plt.xlabel("m/z")
+        plt.ylabel("intensity")
+        title1 = "Spectrum # %d" % (i)
         plt.title(title1)
         plt.show()
-
 
     def get_num_spectra(self):
         """
@@ -280,8 +274,7 @@ class Maldi_MS():
 
         return self.num_spectra
 
-
-    def get_index(self, y:int, x:int):
+    def get_index(self, y: int, x: int):
         """
         get the index of the spectrum at coordinates (x, y, 1)
 
@@ -306,8 +299,7 @@ class Maldi_MS():
         except BaseException:
             return -1
 
-
-    def get_coordinates(self, i:int):
+    def get_coordinates(self, i: int):
         """
         get the coordinates (x, y, 1) of spectrum[i]
 
@@ -326,8 +318,7 @@ class Maldi_MS():
         i = self.check_i(i)
         return self.coordinates[i]
 
-
-    def get_ion_image(self, mz:float, tol:float = 0.1):
+    def get_ion_image(self, mz: float, tol: float = 0.1):
         """
         get a 2D numpy.ndarray with a single ion image at m/z +/- tol
 
@@ -350,7 +341,6 @@ class Maldi_MS():
         else:
             return getionimage(self.p, mz, tol)
 
-
     def get_tic(self):
         """
         get the total ion current (tic) of all spectra
@@ -370,7 +360,6 @@ class Maldi_MS():
 
         return tic
 
-
     def get_metadata_json(self):
         """
         get a string of the metadata in JSON format
@@ -382,7 +371,6 @@ class Maldi_MS():
         """
 
         return json.dumps(self.metadata, sort_keys=False, indent=4)
-
 
     def get_metadata(self):
         """
@@ -401,54 +389,69 @@ class Maldi_MS():
         d = dict()
 
         try:
-            d['name'] = \
-                meta['file_description']['source_files']['sf1']['name']
+            d["name"] = meta["file_description"]["source_files"]["sf1"]["name"]
         except BaseException:
-            pass                                # This path don't exist
+            pass  # This path don't exist
 
         try:
-            d['filter string'] = \
-                meta['referenceable_param_groups']['scan1']['filter string']
-        except BaseException:
-            pass
-
-        try:
-            d['noise level'] = \
-                meta['referenceable_param_groups']['spectrum1']['noise level']
+            d["filter string"] = meta["referenceable_param_groups"]["scan1"][
+                "filter string"
+            ]
         except BaseException:
             pass
 
         try:
-            sample_keys = meta['samples'].keys()    # object of class dict_keys
-            sample_keys = list(sample_keys)         # e.g. ['essen_kidney']
+            d["noise level"] = meta["referenceable_param_groups"]["spectrum1"][
+                "noise level"
+            ]
+        except BaseException:
+            pass
+
+        try:
+            sample_keys = meta["samples"].keys()  # object of class dict_keys
+            sample_keys = list(sample_keys)  # e.g. ['essen_kidney']
             if len(sample_keys) == 1:
-                d['samples'] = sample_keys[0]
+                d["samples"] = sample_keys[0]
             else:
-                d['samples'] = sample_keys
+                d["samples"] = sample_keys
         except BaseException:
             pass
 
         try:
-            d['max count x'] = \
-                meta['scan_settings']['scansettings1']['max count of pixels x']
+            d["max count x"] = meta["scan_settings"]["scansettings1"][
+                "max count of pixels x"
+            ]
+        except BaseException:
+            try:
+                d["max count x"] = meta["scan_settings"]["scanSettings0"][
+                    "max count of pixels x"
+                ]
+            except BaseException:
+                pass
+
+        try:
+            d["max count y"] = meta["scan_settings"]["scansettings1"][
+                "max count of pixels y"
+            ]
+        except BaseException:
+            try:
+                d["max count y"] = meta["scan_settings"]["scanSettings0"][
+                    "max count of pixels y"
+                ]
+            except BaseException:
+                pass
+
+        try:
+            d["pixel size x"] = meta["scan_settings"]["scansettings1"][
+                "pixel size (x)"
+            ]
         except BaseException:
             pass
 
         try:
-            d['max count y'] = \
-                meta['scan_settings']['scansettings1']['max count of pixels y']
-        except BaseException:
-            pass
-
-        try:
-            d['pixel size x'] = \
-                meta['scan_settings']['scansettings1']['pixel size (x)']
-        except BaseException:
-            pass
-
-        try:
-            d['pixel size y'] = \
-                meta['scan_settings']['scansettings1']['pixel size y']
+            d["pixel size y"] = meta["scan_settings"]["scansettings1"][
+                "pixel size y"
+            ]
         except BaseException:
             pass
 
@@ -483,7 +486,6 @@ class Maldi_MS():
 
         return d
 
-
     def getionimage_norm(self, p, mz_value, tol=0.1, z=1, reduce_func=sum):
         """
         Reference: https://github.com/alexandrovteam/pyimzML
@@ -511,13 +513,19 @@ class Maldi_MS():
             pixel. Can be easily plotted with matplotlib
         """
         tol = abs(tol)
-        im = np.zeros((self.p.imzmldict["max count of pixels y"], \
-            self.p.imzmldict["max count of pixels x"]))
+        im = np.zeros(
+            (
+                self.p.imzmldict["max count of pixels y"],
+                self.p.imzmldict["max count of pixels x"],
+            )
+        )
         for i, (x, y, z_) in enumerate(self.p.coordinates):
             if z_ == 0:
-                UserWarning("z coordinate = 0 present, if you're getting blank images set getionimage(.., .., z=0)")
+                UserWarning(
+                    "z coordinate = 0 present, if you're getting blank images set getionimage(.., .., z=0)"
+                )
             if z_ == z:
                 mzs, ints = map(lambda x: np.asarray(x), self.get_spectrum(i))
                 min_i, max_i = _bisect_spectrum(mzs, mz_value, tol)
-                im[y - 1, x - 1] = reduce_func(ints[min_i:max_i+1])
+                im[y - 1, x - 1] = reduce_func(ints[min_i : max_i + 1])
         return im
