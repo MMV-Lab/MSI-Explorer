@@ -69,11 +69,12 @@ class DatabaseWindow(QWidget):
         self.data_frame = QFrame()
         self.data_frame.setLayout(QVBoxLayout())
         
-        self.data_frame.setStyleSheet("border-width: 1;"
+        self.setStyleSheet(" .QFrame {border-width: 1; border-radius: 3; border-style: solid; border-color: rgb(10, 10, 10)}")
+        """self.data_frame.setStyleSheet("border-width: 1;"
                                    "border-radius: 3;"
                                    "border-style: solid;"
                                    "border-color: rgb(10, 10, 10);"
-                                   )
+                                   )"""
         
         self.data_frame.layout().addWidget(self.label_database)
         
@@ -97,11 +98,12 @@ class DatabaseWindow(QWidget):
         data_frame = self.data_frame
         new_data_frame = QFrame()
         new_data_frame.setLayout(QVBoxLayout())
-        new_data_frame.setStyleSheet("border-width: 1;"
+        self.setStyleSheet(" .QFrame {border-width: 1; border-radius: 3; border-style: solid; border-color: rgb(10, 10, 10)}")
+        """new_data_frame.setStyleSheet("border-width: 1;"
                                    "border-radius: 3;"
                                    "border-style: solid;"
                                    "border-color: rgb(10, 10, 10);"
-                                   )
+                                   )"""
         new_data_frame.layout().addWidget(self.label_database)
         with open(self.hidden_databases_conf_file) as f:
             self.hidden_databases = f.readlines()

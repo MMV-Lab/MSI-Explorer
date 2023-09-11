@@ -1,4 +1,5 @@
 import csv
+import cv2
 from qtpy.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -19,6 +20,7 @@ from matplotlib.backends.backend_qt5agg import (
 from matplotlib.widgets import SpanSelector
 import numpy as np
 import napari
+from PIL import ImageFont, ImageDraw, Image
 
 from ._database import DatabaseWindow
 from ._true_mean_spec import get_true_mean_spec
@@ -85,7 +87,7 @@ class SelectionWindow(QWidget):
         Displays the mean spectrum in the graph view
     """
 
-    def __init__(self, viewer):
+    def __init__(self, parent):
         """
         Parameters
         ----------
@@ -93,8 +95,10 @@ class SelectionWindow(QWidget):
             The Napari viewer instance
         """
         super().__init__()
-        self.viewer = viewer
+        self.parent = parent
+        self.viewer = parent.viewer
         self.setLayout(QVBoxLayout())
+        self.SCALE_FACTOR = 10
 
         # self.plot()
         self.canvas = self.initialize_plot()
@@ -286,13 +290,15 @@ class SelectionWindow(QWidget):
                 The Napari viewer instance
             """
             position = viewer.cursor.position
-            index = self.ms_object.get_index(
-                round(position[0]), round(position[1])
-            )
+            # Add +1 due to data coordinates starting at (1,1)
+            x = int(round(position[1]) / self.SCALE_FACTOR) + 1
+            y = int(round(position[0]) / self.SCALE_FACTOR) + 1
+            print(f"position: {position}, x: {x}, y: {y}")
+            index = self.ms_object.get_index(y, x)
             if index == -1:
                 return
             normalized = f"Normalized ({self.ms_object.norm_type})"
-            title = f"{normalized if self.ms_object.is_norm else 'Original'} {(round(position[0]), round(position[1]))}, #{self.ms_object.get_index(round(position[0]), round(position[1]))}"
+            title = f"{normalized if self.ms_object.is_norm else 'Original'} {(y, x)}, #{index}"
             spectrum = self.ms_object.get_spectrum(index)
             self.current_spectrum = np.asarray(spectrum)
             self.plot_spectrum(title=title)
@@ -310,13 +316,15 @@ class SelectionWindow(QWidget):
         """
         if event.text() == "s":
             position = self.viewer.cursor.position
-            index = self.ms_object.get_index(
-                round(position[0]), round(position[1])
-            )
+            # Add +1 due to data coordinates starting at (1,1)
+            x = int(round(position[1]) / self.SCALE_FACTOR) + 1
+            y = int(round(position[0]) / self.SCALE_FACTOR) + 1
+            print(f"x: {x}, y: {y}")
+            index = self.ms_object.get_index(y, x)
             if index == -1:
                 return
             normalized = f"Normalized ({self.ms_object.norm_type})"
-            title = f"{normalized if self.ms_object.is_norm else 'Original:'} {(round(position[0]), round(position[1]))}, #{self.ms_object.get_index(round(position[0]), round(position[1]))}"
+            title = f"{normalized if self.ms_object.is_norm else 'Original:'} {(y, x)}, #{index}"
             spectrum = self.ms_object.get_spectrum(index)
             self.current_spectrum = np.asarray(spectrum)
             self.plot_spectrum(title=title)
@@ -399,12 +407,16 @@ class SelectionWindow(QWidget):
             image = self.ms_object.get_ion_image(mz, tolerance)
         except AttributeError:
             return
+        width = image.shape[1] * self.SCALE_FACTOR
+        height = image.shape[0] * self.SCALE_FACTOR
+        dim = (width, height)
+        image = cv2.resize(image, dim, interpolation = cv2.INTER_NEAREST)
         if self.radio_btn_replace_layer.isChecked():
             try:
                 self.viewer.layers.remove("main view")
             except ValueError:
                 pass
-            self.viewer.add_image(image, name="main view", colormap="inferno")
+            layer = self.viewer.add_image(image, name="main view", colormap="inferno")
         else:
             layername = (
                 "m/z "
@@ -412,7 +424,61 @@ class SelectionWindow(QWidget):
                 + " - "
                 + str(round(mz + tolerance, 3))
             )
-            self.viewer.add_image(image, name=layername, colormap="inferno")
+            layer = self.viewer.add_image(image, name=layername, colormap="inferno")
+        
+        try:
+            self.viewer.layers.remove("colorbar")
+        except ValueError:
+            pass
+        if hasattr(self.parent, "metadata"):
+            metadata = self.parent.metadata
+        else:
+            metadata = self.parent.ms_object.get_metadata()
+        width = metadata['max count x']
+        height = metadata['max count y']
+        colorbar_horizontal = self.viewer.layers[self.viewer.layers.index("main view")].colormap.colorbar[0]
+        
+        zeros = np.zeros((height, width,4), dtype = 'uint8')
+        bottom = width > height
+        #bottom = False
+        fontsize = 16
+        font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans.ttf", fontsize)
+        if bottom:
+            colorbar = np.asarray([colorbar_horizontal])
+            colorbar = np.pad(colorbar, [(2,2),(0, zeros.shape[1] - colorbar.shape[1]),(0,0)], mode = 'constant')
+            colorbar = np.concatenate((zeros, colorbar), 0)
+            rotation = 0
+        else:
+            colorbar = np.asarray([colorbar_horizontal])
+            colorbar = np.rot90(colorbar)
+            if zeros.shape[0] < colorbar.shape[0]:
+                zeros = np.pad(zeros, [(0, colorbar.shape[0] - zeros.shape[0]), (0,0),(0,0)])
+            colorbar = np.pad(colorbar, [(0, zeros.shape[0] - colorbar.shape[0]), (2,7) ,(0,0)], mode = 'constant')
+            colorbar = np.concatenate((zeros, colorbar), 1)
+            rotation = 0
+        
+        width = colorbar.shape[1] * self.SCALE_FACTOR
+        height = colorbar.shape[0] * self.SCALE_FACTOR
+        dim = (width, height)
+        colorbar = cv2.resize(colorbar, dim, interpolation = cv2.INTER_NEAREST)
+        img = Image.fromarray(colorbar)
+        draw = ImageDraw.Draw(img)
+        minimum = np.min(layer.data)
+        maximum = np.max(layer.data)
+        if bottom:
+            posx = height - fontsize
+            draw.text((-1, posx), "{:.0e}".format(minimum), (255, 255, 255), font = font)
+            draw.text((13.5 * self.SCALE_FACTOR - 26.5, posx), "{:.0e}".format((maximum - minimum) / 2), (255, 255, 255), font = font)
+            draw.text((27 * self.SCALE_FACTOR - 43, posx), "{:.0e}".format(maximum), (255, 255, 255), font = font)
+        else:
+            posy = width - fontsize * 4
+            draw.text((posy, -3), "{:.0e}".format(maximum), (255, 255, 255), font = font) # if scale factor changes this will break
+            draw.text((posy, 13.5 * self.SCALE_FACTOR - 4), "{:.0e}".format((maximum - minimum) / 2), (255, 255, 255), font = font)
+            draw.text((posy, 27 * self.SCALE_FACTOR - 5), "{:.0e}".format(minimum), (255, 255, 255), font = font)
+        colorbar = np.asarray(img)
+        layer = self.viewer.add_image(colorbar, name = "colorbar", rgb = True, rotate = rotation)
+        self.viewer.layers.move(self.viewer.layers.index(layer))
+        self.viewer.layers.select_next(len(self.viewer.layers) - 1)
 
     # Sets MAldiMsData object
     def set_data(self, ms_data, data):
