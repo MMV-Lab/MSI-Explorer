@@ -66,6 +66,7 @@ class MSI_Explorer(QWidget):
         ### QObjects
 
         # Labels
+        label_title = QLabel("MSI-Explorer")
         label_preprocessing = QLabel("Preprocessing")
         label_scale = QLabel("Scale:")
         label_correction = QLabel("Mass calibration:")
@@ -119,6 +120,8 @@ class MSI_Explorer(QWidget):
         # widget: parent widget of all content
         widget = QWidget()
         widget.setLayout(QVBoxLayout())
+        
+        widget.layout().addWidget(label_title)
 
         top_buttons = QWidget()
         top_buttons.setLayout(QHBoxLayout())
@@ -133,14 +136,15 @@ class MSI_Explorer(QWidget):
         self.btn_maximize_preprocessing.hide()
 
         self.preprocessing_frame = QFrame()
+        self.preprocessing_frame.setObjectName("preprocessingFrame")
         self.preprocessing_frame.setLayout(QVBoxLayout())
 
-        self.preprocessing_frame.setStyleSheet(
+        """self.preprocessing_frame.setStyleSheet(
             "border-width: 1;"
             "border-radius: 3;"
             "border-style: solid;"
-            "border-color: rgb(10, 10, 10);"
-        )
+            "border-color: rgb(240, 240, 240);"
+        )"""
 
         preprocessing_header = QWidget()
         preprocessing_header.setLayout(QHBoxLayout())
@@ -186,14 +190,16 @@ class MSI_Explorer(QWidget):
         widget.layout().addWidget(self.preprocessing_frame)
 
         roi_frame = QFrame()
+        roi_frame.setObjectName("roiFrame")
         roi_frame.setLayout(QVBoxLayout())
 
-        roi_frame.setStyleSheet(
+        self.setStyleSheet(".QFrame {border-width: 1; border-radius: 3;border-style: solid;border-color: rgb(240, 240, 240)}")
+        """roi_frame.setStyleSheet(
             "border-width: 1;"
             "border-radius: 3;"
             "border-style: solid;"
             "border-color: rgb(10, 10, 10);"
-        )
+        )"""
         roi_frame.layout().addWidget(label_roi)
 
         roi_selection = QWidget()
@@ -215,7 +221,7 @@ class MSI_Explorer(QWidget):
         self.layout().addWidget(scroll_area)
 
         ### Create & float selection widget
-        self.selection_window = SelectionWindow(self.viewer)
+        self.selection_window = SelectionWindow(self)
         self.selection_window.show()
 
     # opens metadata window
@@ -297,7 +303,7 @@ class MSI_Explorer(QWidget):
         """
         Opens an [AnalysisWindow]
         """
-        self.analysis_window = AnalysisWindow()
+        self.analysis_window = AnalysisWindow(self.viewer)
         self.analysis_window.show()
 
     def _hide_preprocessing(self):
