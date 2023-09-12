@@ -232,7 +232,7 @@ class MSI_Explorer(QWidget):
         """
         Opens dialog for user to choose a file, passes data to selection_window
         """
-        filepath = open_dialog(self, "*.imzML")
+        filepath = open_dialog(self, "*.imzML *.imzml")
         QApplication.setOverrideCursor(Qt.WaitCursor)
         file_reader = napari_get_reader(filepath)
 
