@@ -109,7 +109,8 @@ class MSI_Explorer(QWidget):
 
         # Lineedits
         lineedit_correction = QLineEdit()
-        lineedit_noise_reduction = QLineEdit()
+        self.lineedit_noise_reduction = QLineEdit()
+        self.lineedit_noise_reduction.setText("100.0")
         self.lineedit_reference = QLineEdit()
         self.lineedit_reference.setPlaceholderText("M/Z")
         self.lineedit_reference.hide()
@@ -175,7 +176,7 @@ class MSI_Explorer(QWidget):
         preprocessing_noise_reduction.setLayout(QHBoxLayout())
         preprocessing_noise_reduction.layout().addWidget(label_noise_reduction)
         preprocessing_noise_reduction.layout().addWidget(
-            lineedit_noise_reduction
+            self.lineedit_noise_reduction
         )
 
         self.preprocessing_frame.layout().addWidget(
@@ -288,6 +289,14 @@ class MSI_Explorer(QWidget):
             self.ms_object.normalize(normalization_method, mz)
         else:
             self.ms_object.normalize(normalization_method)
+        try:
+            filter_limit = float(self.lineedit_noise_reduction.text())
+        except ValueError:
+            pass
+        else:
+            if filter_limit > 0 and filter_limit < 100:
+                print("running")
+                self.ms_object.peak_filtering(filter_limit / 100)
         QApplication.restoreOverrideCursor()
 
     def _analyze(self):
