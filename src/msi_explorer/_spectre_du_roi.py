@@ -1,9 +1,9 @@
-import numpy as np
+import time
+
 import vaex
 from napari.qt.threading import thread_worker
 from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Qt
-import time
 
 # Copyright © Peter Lampen, ISAS Dortmund, 2023
 # (04.07.2023)
@@ -27,11 +27,11 @@ def spectre_du_roi(maldi_ms, roi):
         a list containing two 1D numpy arrays with m/z and intensities
         of the mean spectrum
     """
-    
-    start_time = time.time()        # start time
+
+    start_time = time.time()  # start time
     QApplication.setOverrideCursor(Qt.WaitCursor)
 
-    index = []              # Find the numbers of the spectra in the ROI
+    index = []  # Find the numbers of the spectra in the ROI
     for coord in roi:
         (y, x) = coord
         i = maldi_ms.get_index(y, x)
@@ -39,28 +39,29 @@ def spectre_du_roi(maldi_ms, roi):
             index.append(i)
     index.sort()
 
-    if len(index) == 0:     # Is any spectrum in the ROI?
-        raise ValueError('The ROI is empty')
+    if len(index) == 0:  # Is any spectrum in the ROI?
+        raise ValueError("The ROI is empty")
 
     spectra = maldi_ms.get_all_spectra()
 
-    spectra_df = [ vaex.from_arrays(mz=spectra[i][0], intens=spectra[i][1]) \
-        for i in index ]            # convert all spectra to a DataFrame
-    df = vaex.concat(spectra_df)    # build one big DataFrame
+    spectra_df = [
+        vaex.from_arrays(mz=spectra[i][0], intens=spectra[i][1]) for i in index
+    ]  # convert all spectra to a DataFrame
+    df = vaex.concat(spectra_df)  # build one big DataFrame
 
-    df['mz'] = df.mz.round(4)       # round m/z to 4 decimal places
+    df["mz"] = df.mz.round(4)  # round m/z to 4 decimal places
     # add up the intensities for equal m/z values
-    df = df.groupby(df.mz, agg='sum', sort=True)
+    df = df.groupby(df.mz, agg="sum", sort=True)
 
-    mz = df.mz.values.to_numpy()    # convert the DataFrame to NumPy 1D arrays
+    mz = df.mz.values.to_numpy()  # convert the DataFrame to NumPy 1D arrays
     intens = df.intens_sum.values
     result = [mz, intens]
 
     stop_time = time.time()
-    print('run time: %.2f seconds' % (stop_time - start_time))
-    print('count = %d' % (df.count()))
-    print('m/z = %.3f - %.3f' % (df.min(df.mz), df.max(df.mz)))
-    print('intensity = %.1f - %9.4g' % (df.min(df.intens_sum), df.max(df.intens_sum)))
+    print(f"run time: {round(stop_time - start_time, 2)} seconds")
+    print(f"count = {df.count()}")
+    print(f"m/z = {df.min(df.mz)} - {df.max(df.mz)}")
+    print(f"intensity = {df.min(df.intens_sum)} - {df.max(df.intens_sum):.3g}")
 
     QApplication.restoreOverrideCursor()
     return result
