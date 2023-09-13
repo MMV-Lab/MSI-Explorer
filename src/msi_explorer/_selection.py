@@ -1,4 +1,5 @@
 import csv
+import math
 import cv2
 from qtpy.QtWidgets import (
     QWidget,
@@ -98,7 +99,7 @@ class SelectionWindow(QWidget):
         self.parent = parent
         self.viewer = parent.viewer
         self.setLayout(QVBoxLayout())
-        self.SCALE_FACTOR = 10
+        self.SCALE_FACTOR:int
 
         # self.plot()
         self.canvas = self.initialize_plot()
@@ -407,10 +408,12 @@ class SelectionWindow(QWidget):
             image = self.ms_object.get_ion_image(mz, tolerance)
         except AttributeError:
             return
+        self.SCALE_FACTOR = int(math.sqrt(5000000 / image.size))
         width = image.shape[1] * self.SCALE_FACTOR
         height = image.shape[0] * self.SCALE_FACTOR
         dim = (width, height)
-        image = cv2.resize(image, dim, interpolation = cv2.INTER_NEAREST)
+        image = cv2.resize(image, None, fx = self.SCALE_FACTOR, fy = self.SCALE_FACTOR, interpolation = cv2.INTER_NEAREST)
+        print(f"{self.SCALE_FACTOR} currently used for {image.size}")
         if self.radio_btn_replace_layer.isChecked():
             try:
                 self.viewer.layers.remove("main view")
@@ -440,7 +443,6 @@ class SelectionWindow(QWidget):
         
         zeros = np.zeros((height, width,4), dtype = 'uint8')
         bottom = width > height
-        #bottom = False
         fontsize = 16
         font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans.ttf", fontsize)
         if bottom:
@@ -457,6 +459,13 @@ class SelectionWindow(QWidget):
             colorbar = np.concatenate((zeros, colorbar), 1)
             rotation = 0
         
+        """
+        TODO:
+        scale colorbar to match axis length (as close as possible) x pixel width
+        scale font size (use minimum)
+        scale font position :)
+        
+        """
         width = colorbar.shape[1] * self.SCALE_FACTOR
         height = colorbar.shape[0] * self.SCALE_FACTOR
         dim = (width, height)
