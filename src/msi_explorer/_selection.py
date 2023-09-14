@@ -414,7 +414,7 @@ class SelectionWindow(QWidget):
         height = image.shape[0] * self.SCALE_FACTOR
         dim = (width, height)
         image = cv2.resize(image, None, fx = self.SCALE_FACTOR, fy = self.SCALE_FACTOR, interpolation = cv2.INTER_NEAREST)
-        print(f"{self.SCALE_FACTOR} currently used for {image.size}")
+        print(f"scaling image with factor {self.SCALE_FACTOR} for a toal of {image.size} pixels")
         if self.radio_btn_replace_layer.isChecked():
             try:
                 self.viewer.layers.remove("main view")
@@ -442,52 +442,58 @@ class SelectionWindow(QWidget):
         height = metadata['max count y']
         colorbar_horizontal = self.viewer.layers[self.viewer.layers.index("main view")].colormap.colorbar[0]
         
-        zeros = np.zeros((height, width,4), dtype = 'uint8')
+        zeros = np.zeros((height * self.SCALE_FACTOR, width * self.SCALE_FACTOR,4), dtype = 'uint8')
         bottom = width > height
-        fontsize = 16
-        font_path = os.path.dirname(os.path.realpath(__file__))+ "/fonts/DejaVuSans.ttf"
-        font = ImageFont.truetype(font_path, fontsize)
         if bottom:
             colorbar = np.asarray([colorbar_horizontal])
-            colorbar = np.pad(colorbar, [(2,2),(0, zeros.shape[1] - colorbar.shape[1]),(0,0)], mode = 'constant')
+            fx = int(width * self.SCALE_FACTOR / colorbar.shape[1])
+            fy = self.SCALE_FACTOR * max(1, int(width /colorbar.shape[1] / 3))
+            colorbar = cv2.resize(
+                colorbar,
+                None,
+                fx = fx,
+                fy = fy,
+                interpolation = cv2.INTER_NEAREST
+            )
+            colorbar = np.pad(colorbar, [(2*fy,2 * fx),(0, zeros.shape[1] - colorbar.shape[1]),(0,0)], mode = 'constant')
             colorbar = np.concatenate((zeros, colorbar), 0)
-            rotation = 0
         else:
             colorbar = np.asarray([colorbar_horizontal])
             colorbar = np.rot90(colorbar)
+            fy = int(height * self.SCALE_FACTOR / colorbar.shape[0])
+            fx = self.SCALE_FACTOR * max(1,int(height / colorbar.shape[0] / 3))
+            colorbar = cv2.resize(
+                colorbar,
+                None,
+                fx = fx,
+                fy = fy,
+                interpolation = cv2.INTER_NEAREST
+            )
             if zeros.shape[0] < colorbar.shape[0]:
                 zeros = np.pad(zeros, [(0, colorbar.shape[0] - zeros.shape[0]), (0,0),(0,0)])
-            colorbar = np.pad(colorbar, [(0, zeros.shape[0] - colorbar.shape[0]), (2,7) ,(0,0)], mode = 'constant')
+            colorbar = np.pad(colorbar, [(0, zeros.shape[0] - colorbar.shape[0]), (2*fx,6*fy) ,(0,0)], mode = 'constant')
             colorbar = np.concatenate((zeros, colorbar), 1)
-            rotation = 0
         
-        """
-        TODO:
-        scale colorbar to match axis length (as close as possible) x pixel width
-        scale font size (use minimum)
-        scale font position :)
-        
-        """
-        width = colorbar.shape[1] * self.SCALE_FACTOR
-        height = colorbar.shape[0] * self.SCALE_FACTOR
-        dim = (width, height)
-        colorbar = cv2.resize(colorbar, dim, interpolation = cv2.INTER_NEAREST)
         img = Image.fromarray(colorbar)
         draw = ImageDraw.Draw(img)
         minimum = np.min(layer.data)
         maximum = np.max(layer.data)
+        fontsize = max(fx, fy)
+        print(f"fontsize: {fontsize}")
+        font_path = os.path.dirname(os.path.realpath(__file__))+ "/fonts/DejaVuSans.ttf"
+        font = ImageFont.truetype(font_path, fontsize)
         if bottom:
-            posx = height - fontsize
-            draw.text((-1, posx), "{:.0e}".format(minimum), (255, 255, 255), font = font)
-            draw.text((13.5 * self.SCALE_FACTOR - 26.5, posx), "{:.0e}".format((maximum - minimum) / 2), (255, 255, 255), font = font)
-            draw.text((27 * self.SCALE_FACTOR - 43, posx), "{:.0e}".format(maximum), (255, 255, 255), font = font)
+            posx = colorbar.shape[0] - fontsize
+            draw.text((0, posx), "{:.0e}".format(minimum), (255, 255, 255), font = font)
+            draw.text((colorbar.shape[1] / 2 - fontsize * 1.75, posx), "{:.0e}".format((maximum - minimum) / 2), (255, 255, 255), font = font)
+            draw.text((colorbar.shape[1] - fontsize * 3.5, posx), "{:.0e}".format(maximum), (255, 255, 255), font = font)
         else:
-            posy = width - fontsize * 4
-            draw.text((posy, -3), "{:.0e}".format(maximum), (255, 255, 255), font = font) # if scale factor changes this will break
-            draw.text((posy, 13.5 * self.SCALE_FACTOR - 4), "{:.0e}".format((maximum - minimum) / 2), (255, 255, 255), font = font)
-            draw.text((posy, 27 * self.SCALE_FACTOR - 5), "{:.0e}".format(minimum), (255, 255, 255), font = font)
+            posy = colorbar.shape[1] - 5 * fontsize
+            draw.text((posy, 0), "{:.0e}".format(maximum), (255, 255, 255), font = font) # if scale factor changes this will break
+            draw.text((posy, (colorbar.shape[0] - fontsize) / 2), "{:.0e}".format((maximum - minimum) / 2), (255, 255, 255), font = font)
+            draw.text((posy, colorbar.shape[0] - fontsize), "{:.0e}".format(minimum), (255, 255, 255), font = font)
         colorbar = np.asarray(img)
-        layer = self.viewer.add_image(colorbar, name = "colorbar", rgb = True, rotate = rotation)
+        layer = self.viewer.add_image(colorbar, name = "colorbar", rgb = True)
         self.viewer.layers.move(self.viewer.layers.index(layer))
         self.viewer.layers.select_next(len(self.viewer.layers) - 1)
 
