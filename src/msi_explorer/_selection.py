@@ -444,7 +444,7 @@ class SelectionWindow(QWidget):
         zeros = np.zeros((height, width,4), dtype = 'uint8')
         bottom = width > height
         fontsize = 16
-        font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans.ttf", fontsize)
+        font = ImageFont.truetype("DejaVuSans.ttf", fontsize)
         if bottom:
             colorbar = np.asarray([colorbar_horizontal])
             colorbar = np.pad(colorbar, [(2,2),(0, zeros.shape[1] - colorbar.shape[1]),(0,0)], mode = 'constant')
