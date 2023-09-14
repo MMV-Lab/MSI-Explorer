@@ -1,4 +1,5 @@
 import csv
+import os
 import math
 import cv2
 from qtpy.QtWidgets import (
@@ -444,7 +445,8 @@ class SelectionWindow(QWidget):
         zeros = np.zeros((height, width,4), dtype = 'uint8')
         bottom = width > height
         fontsize = 16
-        font = ImageFont.truetype("/usr/share/fonts/dejavu/DejaVuSans.ttf", fontsize)
+        font_path = os.path.dirname(os.path.realpath(__file__))+ "/fonts/DejaVuSans.ttf"
+        font = ImageFont.truetype(font_path, fontsize)
         if bottom:
             colorbar = np.asarray([colorbar_horizontal])
             colorbar = np.pad(colorbar, [(2,2),(0, zeros.shape[1] - colorbar.shape[1]),(0,0)], mode = 'constant')
