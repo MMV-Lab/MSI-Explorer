@@ -593,7 +593,10 @@ class SelectionWindow(QWidget):
         index_lists = np.nonzero(roi_layer.data)
         indices = []
         for i in range(len(index_lists[0])):
-            indices.append([index_lists[0][i], index_lists[1][i]])
+            indices.append([
+                int(round(index_lists[0][i] / self.SCALE_FACTOR)) + 1,
+                int(round(index_lists[1][i] / self.SCALE_FACTOR)) + 1
+            ])
 
         worker = spectre_du_roi(self.ms_object, indices)
         worker.returned.connect(self.display_roi_mean_spectrum)
