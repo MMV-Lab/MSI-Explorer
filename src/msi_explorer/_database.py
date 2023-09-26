@@ -169,6 +169,7 @@ class DatabaseWindow(QWidget):
         key_list = sorted(key_list, key = float)
         metabolites_sorted = {key: metabolites[key] for key in key_list}
         self.parent.metabolites = metabolites_sorted
+        self.parent.modified_metabolites = self.parent.metabolites
         self.parent.update_mzs()
         self.close()
         
