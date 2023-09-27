@@ -319,126 +319,65 @@ class Maldi_MS():
 
         meta = self.metadata
         d = dict()
-        
-        if 'sf1' in meta['file_description']['source_files'].keys():
-            d['name'] = meta['file_description']['source_files']['sf1']['name']
-        elif 'SF1' in meta['file_description']['source_files'].keys():
-            d['name'] = meta['file_description']['source_files']['SF1']['name'] 
 
-        """try:
+        try:
             d['name'] = meta['file_description']['source_files']['sf1']['name']
-        except KeyError:
-            pass                                    # This path don't exist"""
-        
-        if 'scan1' in meta['referenceable_param_groups'].keys():
+        except BaseException:
+            pass                                    # This path don't exist
+
+        try:
             d['filter string'] = \
                 meta['referenceable_param_groups']['scan1']['filter string']
-        """try:
-            d['filter string'] = \
-                meta['referenceable_param_groups']['scan1']['filter string']
-        except KeyError:
-            pass"""
-                
-        if 'spectrum1' in meta['referenceable_param_groups'].keys() \
-            and 'noise level' in meta['referenceable_param_groups']['spectrum1'].keys():
-            d['noise level'] = \
-                meta['referenceable_param_groups']['spectrum1']['noise level']
+        except BaseException:
+            pass
 
-        """try:
+        try:
             d['noise level'] = \
                 meta['referenceable_param_groups']['spectrum1']['noise level']
-        except KeyError:
-            pass"""
-        
-        if 'samples' in meta.keys():
-            sample_keys = list(meta['samples'].keys())
-            if len(sample_keys) == 1:
-                d['samples'] = sample_keys[0]
-            else:
-                d['samples'] = sample_keys
-                
-        """try:
+        except BaseException:
+            pass
+
+        try:
             sample_keys = meta['samples'].keys()    # object of class dict_keys
             sample_keys = list(sample_keys)         # e.g. ['essen_kidney']
             if len(sample_keys) == 1:
                 d['samples'] = sample_keys[0]
             else:
                 d['samples'] = sample_keys
-        except KeyError:
-            pass"""
+        except BaseException:
+            pass
 
-        if 'scansettings1' in meta['scan_settings'].keys():
+        try:
             d['max count x'] = \
                 meta['scan_settings']['scansettings1']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scansettings1']['max count of pixels y']
-            d['pixel size x'] = \
-                meta['scan_settings']['scansettings1']['pixel size (x)']
-            d['pixel size y'] = \
-                meta['scan_settings']['scansettings1']['pixel size y']
-            print("case 1!")
-        elif 'scanSettings0' in meta['scan_settings'].keys():
-            d['max count x'] = \
-                meta['scan_settings']['scanSettings0']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scanSettings0']['max count of pixels y']
-            d['pixel size x'] = \
-                meta['scan_settings']['scanSettings0']['pixel size (x)']
-            d['pixel size y'] = \
-                meta['scan_settings']['scanSettings0']['pixel size y']
-            print("case 2!")
-        elif 'scan1' in meta['scan_settings'].keys():
-            d['max count x'] = \
-                meta['scan_settings']['scan1']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scan1']['max count of pixels y']
-            d['pixel size x'] = \
-                meta['scan_settings']['scan1']['pixel size (x)']
-            d['pixel size y'] = \
-                meta['scan_settings']['scan1']['pixel size (x)']
-            print("case 3!")
-        elif 'scansetting1' in meta['scan_settings'].keys():
-            d['max count x'] = \
-                meta['scan_settings']['scansetting1']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scansetting1']['max count of pixels y']
-            d['pixel size x'] = \
-                meta['scan_settings']['scansetting1']['pixel size (x)']
-            d['pixel size y'] = \
-                meta['scan_settings']['scansetting1']['pixel size y']
-            print("case 4!")
-                
-        """try:
-            d['max count x'] = \
-                meta['scan_settings']['scansettings1']['max count of pixels x']
-        except KeyError:
+        except BaseException:
             try:
                 d["max count x"] = \
                     meta["scan_settings"]["scanSettings0"]["max count of pixels x"]
-            except KeyError:
-                pass"""
-                
-        """try:
+            except BaseException:
+                pass
+
+        try:
             d['max count y'] = \
                 meta['scan_settings']['scansettings1']['max count of pixels y']
-        except KeyError:
+        except BaseException:
             try:
                 d["max count y"] = \
                     meta["scan_settings"]["scanSettings0"]["max count of pixels y"]
-            except KeyError:
-                pass"""
-             
-        """try:
+            except BaseException:
+                pass
+
+        try:
             d['pixel size x'] = \
                 meta['scan_settings']['scansettings1']['pixel size (x)']
-        except KeyError:
+        except BaseException:
             pass
 
         try:
             d['pixel size y'] = \
                 meta['scan_settings']['scansettings1']['pixel size y']
-        except KeyError:
-            pass"""
+        except BaseException:
+            pass
 
         return d
 
