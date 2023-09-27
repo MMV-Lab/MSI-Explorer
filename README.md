@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/MMV-Lab/MSI-Explorer/branch/main/graph/badge.svg?token=LR8CU032ZD)](https://codecov.io/gh/MMV-Lab/MSI-Explorer)
 [![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/MSI-Explorer)](https://napari-hub.org/plugins/MSI-Explorer)
 
-A simple plugin to use with napari
+a napari plug-in for biochemical annotation of mass spectrometry imaging data
 
 ----------------------------------
 
