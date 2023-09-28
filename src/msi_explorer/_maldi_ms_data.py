@@ -13,11 +13,14 @@ Maldi_MS
 # Copyright © Peter Lampen, ISAS Dortmund, 2023
 # (07.02.2023)
 
+import copy
 import numpy as np
+from scipy.integrate import cumulative_trapezoid
 import matplotlib.pyplot as plt
 import json
 import os
 from pyimzml.ImzMLParser import ImzMLParser, getionimage, _bisect_spectrum
+import time
 
 class Maldi_MS():
     """
@@ -29,10 +32,12 @@ class Maldi_MS():
         This is the result of the method ImzMLParser('NN.imzML')
     spectra : list
         A list of sublists containing two ndarrays: m/z and intensity
-    norm_spectra : list
-        A list of sublists containing normalized spectra
+    new_spectra : list
+        A list of sublists containing processed spectra
     is_norm : boolean
-        re there normalized spectra?
+        are there normalized spectra?
+    is_centroid : boolean
+        are there centroid data
     coordinates : list
         A list of tuples containing the coordinates (x, y, z)
     metadata : dict
@@ -60,19 +65,23 @@ class Maldi_MS():
         get the coordinates (x, y, 1) of spectrum[i]
     get_ion_image(mz: float, tol: float)
         get a 2D ndarray with an ion image at m/z +/- tol
-    get_tic()
-        get the total ion current (tic) of all spectra
+    plot_ion_image(self, image: ndarray):
+        2D plot of an ion image
     get_metadata_json()
         get a string of the metadata in JSON format
     get_metadata()
         get a dictionary with selected metadata
     normalize(self, norm: str, mz0: float = 256.777, tol: float = 0.003)
         normalize the spectra by different methods: tic, rms, median, peak
-    getionimage_norm(self, p, mz_value, tol=0.1, z=1, reduce_func=sum)
+    getionimage_new(self, p, mz_value, tol=0.1, z=1, reduce_func=sum)
         Get an image representation of the intensity distribution
         of the ion with specified m/z value.
     peak_filtering(self, factor: float = 0.01)
         remove small peaks < limit
+    centroid_data(self)
+        calculation of centroid data
+    calculate_centroid_spectrum(self, spectrum: list)
+        calculate a centroid spectrum from a profile spectrum
     """
 
     def __init__(self, filename: str):
@@ -91,8 +100,9 @@ class Maldi_MS():
         p = ImzMLParser(filename)
         self.p = p
         self.spectra = []           # empty list
-        self.norm_spectra = []
+        self.new_spectra = []
         self.is_norm = False
+        self.is_centroid = False
         self.norm_type = 'original' # Lennart
         self.coordinates = []
 
@@ -150,8 +160,8 @@ class Maldi_MS():
 
         i = self.check_i(i)
 
-        if self.is_norm:
-            return self.norm_spectra[i]
+        if self.is_norm or self.is_centroid:
+            return self.new_spectra[i]
         else:
             return self.spectra[i]
 
@@ -169,12 +179,12 @@ class Maldi_MS():
         """
 
         # (17.05.2023)
-        if self.is_norm:
-            return self.norm_spectra
+        if self.is_norm or self.is_centroid:
+            return self.new_spectra
         else:
             return self.spectra
 
-    def plot_spectrum(self, i: int):
+    def plot_spectrum(self, i: int = 0):
         """
         plot spectrum[i] with matplotlib.pyplot
 
@@ -184,14 +194,20 @@ class Maldi_MS():
             index of spectrum[i]
         """
 
-        spectrum = self.get_spectrum(i)
-        mz, intensities = spectrum
-        title1 = 'Spectrum # %d' % (i)
+        if self.is_norm or self.is_centroid:
+            mz, intensities = self.new_spectra[i]
+        else:
+            mz, intensities = self.spectra[i]
 
         fig, ax = plt.subplots()
-        ax.plot(mz, intensities)
-        ax.set(xlabel = 'm/z', ylabel = 'Intensity')
-        ax.set(title = title1)
+
+        if self.is_centroid:
+            ax.stem(mz, intensities, markerfmt='none')
+        else:
+            ax.plot(mz, intensities)
+
+        title1 = 'Spectrum # %d' % (i)
+        ax.set(xlabel = 'm/z', ylabel = 'Intensity', title = title1)
         plt.show()
 
     def get_num_spectra(self):
@@ -268,29 +284,26 @@ class Maldi_MS():
         """
 
         # Export of an ion image for the value m/z +/- tol (10.02.2023)
-        if self.is_norm:
-            return self.getionimage_norm(self.p, mz, tol)
+        if self.is_norm or self.is_centroid:
+            return self.getionimage_new(self.p, mz, tol)
         else:
             return getionimage(self.p, mz, tol)
 
-    def get_tic(self):
+    def plot_ion_image(self, image):
         """
-        get the total ion current (tic) of all spectra
+        plot the ion image calculateb by the function get_ion_image()
 
-        Returns
-        -------
-        numpy.ndarray
-            total ion current of all spectra
+        Parameters
+        ----------
+        image : ndarray
+            2D ion image
         """
 
-        # (17.02.2023)
-        n = self.num_spectra
-        tic = np.zeros(n)
-
-        for i, spectrum in enumerate(self.spectra):
-            tic[i] = spectrum[1].sum()
-
-        return tic
+        # (27.09.2023)
+        fig, ax = plt.subplots()
+        img = ax.imshow(image, interpolation='nearest', cmap='inferno')
+        plt.colorbar(img)
+        return fig
 
     def get_metadata_json(self):
         """
@@ -395,7 +408,7 @@ class Maldi_MS():
             tolerance of the m/z value in Da
         """
         # (18.07.2023)
-        self.norm_spectra = []
+        self.new_spectra = []
         self.norm_type = norm       # Lennart
         if norm == 'original':      # Lennart
             self.is_norm = False
@@ -409,7 +422,7 @@ class Maldi_MS():
                 tic = np.mean(intensities2)
 
                 intensities /= tic
-                self.norm_spectra.append([mz, intensities])
+                self.new_spectra.append([mz, intensities])
             self.is_norm = True
         elif norm == 'rms':               # Root mean square = Vector norm
             for spectrum in self.spectra:
@@ -423,7 +436,7 @@ class Maldi_MS():
                 rms = np.sqrt(mean1)
 
                 intensities /= rms
-                self.norm_spectra.append([mz, intensities])
+                self.new_spectra.append([mz, intensities])
             self.is_norm = True
         elif norm == 'median':
             for spectrum in self.spectra:
@@ -435,7 +448,7 @@ class Maldi_MS():
                 median1 = np.median(intensities2)
 
                 intensities /= median1
-                self.norm_spectra.append([mz, intensities])
+                self.new_spectra.append([mz, intensities])
             self.is_norm = True
         elif norm == 'peak':
             for spectrum in self.spectra:
@@ -459,11 +472,11 @@ class Maldi_MS():
 
                 # Third step: normalize the spectrum
                 intensities *= factor
-                self.norm_spectra.append([mz, intensities])
+                self.new_spectra.append([mz, intensities])
             self.is_norm = True
             self.norm_type += f" {mz0}"
 
-    def getionimage_norm(self, p, mz_value, tol=0.1, z=1, reduce_func=sum):
+    def getionimage_new(self, p, mz_value, tol=0.1, z=1, reduce_func=sum):
         """
         Reference: https://github.com/alexandrovteam/pyimzML
 
@@ -512,8 +525,8 @@ class Maldi_MS():
         """
 
         # (31.08.2023)
-        if self.is_norm:
-            spectra = self.norm_spectra
+        if self.is_norm or self.is_centroid:
+            spectra = self.new_spectra
         else:
             spectra = self.spectra
 
@@ -533,3 +546,97 @@ class Maldi_MS():
             mz2 = mz[filter3]
             intensities2 = intensities[filter3]
             spectra[i] = [mz2, intensities2]
+
+    def centroid_data(self):
+        """
+        calculation of centroid data
+        """
+        
+        # (26.09.2023)
+        start_time = time.time()        # start time
+        if self.is_norm:
+            spectra = copy.deepcopy(self.new_spectra)
+        else:
+            spectra = self.spectra
+
+        self.new_spectra = []
+
+        for i, spectrum in enumerate(spectra):
+            new_spectrum = self.calculate_centroid_spectrum(spectrum)
+            self.new_spectra.append(new_spectrum)
+
+            if i == 0:
+                pass
+            elif i % 10000 == 0:
+                j = i // 1000
+                print(j, end='')      # show a progress bar
+            elif i % 1000 == 0:
+                print('.', end='')
+
+        self.is_centroid = True
+        stop_time = time.time()
+        print('\nrun time: %.2f seconds' % (stop_time - start_time))
+
+    def calculate_centroid_spectrum(self, spectrum: list):
+        """
+        calculate a centroid spectrum from a profile spectrum
+
+        Parameters
+        ----------
+        spectrum : list
+            A list containing two ndarrays: m/z and intensities
+
+        Returns
+        -------
+        new_spectrum
+            A list with the centroid data
+        """
+        
+        # (26.09.2023)
+        mz, intensities = spectrum
+        quad_int = cumulative_trapezoid(intensities, x=mz, initial=0.0)
+        # indeterminate integral across the spectrum
+        mz_x_int = mz * intensities
+        # product of m/z * intensity
+
+        n = len(mz)
+        i = 0           # counter for the data points in the profile spectrum
+        j = 0           # counter for the peaks in the centroid spectrum
+        ready = False
+        mz2 = np.zeros(n)
+        intensities2 = np.zeros(n)
+
+        while ready != True:
+            while (i < n) and (intensities[i] != 0.0):  # find the first 0
+                i += 1
+            while (i < n) and (intensities[i] == 0.0):  # find the last 0
+                i += 1
+
+            if i < n:
+                start = i - 1       # last 0 before the peak
+            else:
+                ready = True        # end of the spectrum
+
+            while (i < n) and (intensities[i] != 0.0):
+                i += 1
+            
+            if i < n:
+                end = i             # first 0 after the peak
+            else:
+                ready = True        # end of the spectrum
+
+            if ready == False:
+                new_intensity = quad_int[end] - quad_int[start]
+                # determined integral over the peak
+                sum_mz_x_int = np.sum(mz_x_int[start:end+1])
+                # sum over m/z * intensity
+                sum_int = np.sum(intensities[start:end+1])
+                # sum of intensities
+                
+                new_mz = sum_mz_x_int / sum_int
+                #print('start =', start, 'end =', end, 'mz2 =', mz2, 'intensity2 =', intensity2)
+                mz2[j] = new_mz
+                intensities2[j] = new_intensity
+                j += 1
+
+        return [mz2[0:j], intensities2[0:j]]
