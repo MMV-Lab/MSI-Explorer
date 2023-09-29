@@ -387,7 +387,10 @@ class SelectionWindow(QWidget):
         self.axes.clear()
         if spectrum is None:
             spectrum = self.current_spectrum
-        self.axes.plot(*spectrum)
+        if self.ms_object.check_centroid():
+            self.axes.stem(*spectrum, markerfmt = " ")
+        else:
+            self.axes.plot(*spectrum)
         self.axes.ticklabel_format(useOffset=False)
         self.axes.set_title(title)
         self.canvas.draw()
