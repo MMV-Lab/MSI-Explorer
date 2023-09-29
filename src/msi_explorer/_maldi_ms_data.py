@@ -21,6 +21,7 @@ import json
 import os
 from pyimzml.ImzMLParser import ImzMLParser, getionimage, _bisect_spectrum
 import time
+from tqdm import tqdm
 
 class Maldi_MS():
     """
@@ -82,6 +83,8 @@ class Maldi_MS():
         calculation of centroid data
     calculate_centroid_spectrum(self, spectrum: list)
         calculate a centroid spectrum from a profile spectrum
+    check_centroid(self):
+        is the spectrum in centroid mode?
     """
 
     def __init__(self, filename: str):
@@ -561,17 +564,9 @@ class Maldi_MS():
 
         self.new_spectra = []
 
-        for i, spectrum in enumerate(spectra):
+        for spectrum in tqdm(spectra):
             new_spectrum = self.calculate_centroid_spectrum(spectrum)
             self.new_spectra.append(new_spectrum)
-
-            if i == 0:
-                pass
-            elif i % 10000 == 0:
-                j = i // 1000
-                print(j, end='')      # show a progress bar
-            elif i % 1000 == 0:
-                print('.', end='')
 
         self.is_centroid = True
         stop_time = time.time()
@@ -640,3 +635,30 @@ class Maldi_MS():
                 j += 1
 
         return [mz2[0:j], intensities2[0:j]]
+
+    def check_centroid(self):
+        """
+        Is the spectrum in centroid mode?
+
+        Returns
+        -------
+        is_centroid : bool
+            True: if the spectrum is in centroid mode
+            False: else
+        """
+
+        # (29.09.2023)
+        if self.is_centroid:
+            return True
+        else:
+            n = self.num_spectra
+            i = int(n / 2)
+            spectrum = self.spectra[i]
+            mz, intensities = spectrum
+            min1 = np.min(intensities)
+            median1 = np.median(intensities)
+
+            if (min1 > 0.0) or ((min1 == 0) and (median1 == 0)):
+                return True
+            elif median1 > 0:
+                return False
