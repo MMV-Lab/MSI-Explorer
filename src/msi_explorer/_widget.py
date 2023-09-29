@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 import warnings
+import os
 
 from qtpy.QtWidgets import (
     QHBoxLayout,
@@ -16,6 +17,8 @@ from qtpy.QtWidgets import (
     QGridLayout,
 )
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QImage, QPixmap
+import cv2
 
 from ._selection import SelectionWindow
 from ._metadata import MetadataWindow
@@ -64,9 +67,20 @@ class MSI_Explorer(QWidget):
         self.viewer = napari_viewer
 
         ### QObjects
+        
+        # Logo
+        filename = "placeholder.png"
+        absolute_path = os.path.dirname(os.path.abspath(__file__))
+        relative_path = os.path.join("ressources/",filename)
+        path = os.path.join(absolute_path,relative_path)
+        image = cv2.imread(path)
+        height, width, channel = image.shape
+        logo = QPixmap(QImage(image.data, width, height, 3* width, QImage.Format_BGR888))
 
         # Labels
-        label_title = QLabel("MSI-Explorer")
+        label_title = QLabel()
+        label_title.setPixmap(logo)
+        label_title.setAlignment(Qt.AlignCenter)
         label_preprocessing = QLabel("Preprocessing")
         label_scale = QLabel("Scale:")
         label_correction = QLabel("Mass calibration:")

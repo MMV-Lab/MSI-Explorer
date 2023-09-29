@@ -161,7 +161,7 @@ class DatabaseWindow(QWidget):
         for i in range(1, data.indexOf(self.buttons_widget)):
             if data.itemAt(i).widget().isChecked():
                 with open(self.db_directory+data.itemAt(i).widget().text() + ".csv", newline='') as csvfile:
-                    database_reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+                    database_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
                     for row in database_reader:
                         metabolites[row[0]] = (row[1],row[2])
                         key_list.append(row[0])
