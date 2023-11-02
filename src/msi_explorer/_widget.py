@@ -278,7 +278,7 @@ class MSI_Explorer(QWidget):
             msg = QMessageBox()
             msg.setWindowTitle("Profile detected")
             msg.setText("It appears the data is stored in profile mode. " + \
-            "Do you want to convert it to profile mode now?")
+            "Do you want to convert it to centroid mode now?")
             msg.addButton(QMessageBox.Yes)
             msg.addButton(QMessageBox.No)
             if msg.exec() == 16384:
