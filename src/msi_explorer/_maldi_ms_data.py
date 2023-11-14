@@ -336,64 +336,67 @@ class Maldi_MS():
         meta = self.metadata
         d = dict()
 
-        try:
+        if 'sf1' in meta['file_description']['source_files'].keys():
             d['name'] = meta['file_description']['source_files']['sf1']['name']
-        except BaseException:
-            pass                                    # This path don't exist
-
-        try:
+        elif 'SF1' in meta['file_description']['source_files'].keys():
+            d['name'] = meta['file_description']['source_files']['SF1']['name']
+        
+        if 'scan1' in meta['referenceable_param_groups'].keys():
             d['filter string'] = \
                 meta['referenceable_param_groups']['scan1']['filter string']
-        except BaseException:
-            pass
-
-        try:
+                
+        if 'spectrum1' in meta['referenceable_param_groups'].keys() \
+            and 'noise level' in meta['referenceable_param_groups']['spectrum1'].keys():
             d['noise level'] = \
                 meta['referenceable_param_groups']['spectrum1']['noise level']
-        except BaseException:
-            pass
-
-        try:
-            sample_keys = meta['samples'].keys()    # object of class dict_keys
-            sample_keys = list(sample_keys)         # e.g. ['essen_kidney']
+        
+        if 'samples' in meta.keys():
+            sample_keys = list(meta['samples'].keys())
             if len(sample_keys) == 1:
                 d['samples'] = sample_keys[0]
             else:
                 d['samples'] = sample_keys
-        except BaseException:
-            pass
 
-        try:
+        if 'scansettings1' in meta['scan_settings'].keys():
             d['max count x'] = \
                 meta['scan_settings']['scansettings1']['max count of pixels x']
-        except BaseException:
-            try:
-                d["max count x"] = \
-                    meta["scan_settings"]["scanSettings0"]["max count of pixels x"]
-            except BaseException:
-                pass
-
-        try:
             d['max count y'] = \
                 meta['scan_settings']['scansettings1']['max count of pixels y']
-        except BaseException:
-            try:
-                d["max count y"] = \
-                    meta["scan_settings"]["scanSettings0"]["max count of pixels y"]
-            except BaseException:
-                pass
-
-        try:
             d['pixel size x'] = \
                 meta['scan_settings']['scansettings1']['pixel size (x)']
-        except BaseException:
-            pass
-
-        try:
             d['pixel size y'] = \
                 meta['scan_settings']['scansettings1']['pixel size y']
-        except BaseException:
-            pass
+            print("case 1!")
+        elif 'scanSettings0' in meta['scan_settings'].keys():
+            d['max count x'] = \
+                meta['scan_settings']['scanSettings0']['max count of pixels x']
+            d['max count y'] = \
+                meta['scan_settings']['scanSettings0']['max count of pixels y']
+            d['pixel size x'] = \
+                meta['scan_settings']['scanSettings0']['pixel size (x)']
+            d['pixel size y'] = \
+                meta['scan_settings']['scanSettings0']['pixel size y']
+            print("case 2!")
+        elif 'scan1' in meta['scan_settings'].keys():
+            d['max count x'] = \
+                meta['scan_settings']['scan1']['max count of pixels x']
+            d['max count y'] = \
+                meta['scan_settings']['scan1']['max count of pixels y']
+            d['pixel size x'] = \
+                meta['scan_settings']['scan1']['pixel size (x)']
+            d['pixel size y'] = \
+                meta['scan_settings']['scan1']['pixel size (x)']
+            print("case 3!")
+        elif 'scansetting1' in meta['scan_settings'].keys():
+            d['max count x'] = \
+                meta['scan_settings']['scansetting1']['max count of pixels x']
+            d['max count y'] = \
+                meta['scan_settings']['scansetting1']['max count of pixels y']
+            d['pixel size x'] = \
+                meta['scan_settings']['scansetting1']['pixel size (x)']
+            d['pixel size y'] = \
+                meta['scan_settings']['scansetting1']['pixel size y']
+            print("case 4!")
 
         return d
 

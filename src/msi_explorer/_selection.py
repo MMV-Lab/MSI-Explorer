@@ -387,7 +387,10 @@ class SelectionWindow(QWidget):
         self.axes.clear()
         if spectrum is None:
             spectrum = self.current_spectrum
-        self.axes.plot(*spectrum)
+        if self.ms_object.check_centroid():
+            self.axes.stem(*spectrum, markerfmt = " ")
+        else:
+            self.axes.plot(*spectrum)
         self.axes.ticklabel_format(useOffset=False)
         self.axes.set_title(title)
         self.canvas.draw()
@@ -438,7 +441,7 @@ class SelectionWindow(QWidget):
         height = image.shape[0] * self.SCALE_FACTOR
         dim = (width, height)
         image = cv2.resize(image, None, fx = self.SCALE_FACTOR, fy = self.SCALE_FACTOR, interpolation = cv2.INTER_NEAREST)
-        print(f"scaling image with factor {self.SCALE_FACTOR} for a toal of {image.size} pixels")
+        print(f"scaling image with factor {self.SCALE_FACTOR} for a total of {image.size} pixels")
         if self.radio_btn_replace_layer.isChecked():
             try:
                 self.viewer.layers.remove("main view")
