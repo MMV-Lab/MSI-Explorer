@@ -297,6 +297,7 @@ class MSI_Explorer(QWidget):
         )
         self.selection_window.plot_spectrum(title=title)
         self.selection_window.display_image_from_plot()
+        self.selection_window.mean_spectra.clear()
 
         # enable buttons after loading data
         self.btn_view_metadata.setEnabled(True)
