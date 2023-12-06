@@ -3,7 +3,8 @@ Module for the definition of the class Maldi_MS
 
 Imports
 -------
-numpy, matplotlib.pyplot, json, pyimzml.ImzMLParser
+copy, numpy, scipy, matplotlib.pyplot, json, os, pyimzml.ImzMLParser, time,
+numba
 
 Exports
 -------
@@ -15,13 +16,13 @@ Maldi_MS
 
 import copy
 import numpy as np
-from scipy.integrate import cumulative_trapezoid
+from scipy import integrate
 import matplotlib.pyplot as plt
 import json
 import os
 from pyimzml.ImzMLParser import ImzMLParser, getionimage, _bisect_spectrum
 import time
-from tqdm import tqdm
+from numba import jit
 
 class Maldi_MS():
     """
@@ -81,8 +82,6 @@ class Maldi_MS():
         remove small peaks < limit
     centroid_data(self)
         calculation of centroid data
-    calculate_centroid_spectrum(self, spectrum: list)
-        calculate a centroid spectrum from a profile spectrum
     check_centroid(self):
         is the spectrum in centroid mode?
     """
@@ -171,9 +170,6 @@ class Maldi_MS():
     def get_all_spectra(self):
         """
         get a list with all spectra
-
-        Parameter
-        ---------
 
         Returns
         -------
@@ -553,92 +549,6 @@ class Maldi_MS():
             intensities2 = intensities[filter3]
             spectra[i] = [mz2, intensities2]
 
-    def centroid_data(self):
-        """
-        calculation of centroid data
-        """
-        
-        # (26.09.2023)
-        start_time = time.time()        # start time
-        if self.is_norm:
-            spectra = copy.deepcopy(self.new_spectra)
-        else:
-            spectra = self.spectra
-
-        self.new_spectra = []
-
-        for spectrum in tqdm(spectra):
-            new_spectrum = self.calculate_centroid_spectrum(spectrum)
-            self.new_spectra.append(new_spectrum)
-
-        self.is_centroid = True
-        stop_time = time.time()
-        print('\nrun time: %.2f seconds' % (stop_time - start_time))
-
-    def calculate_centroid_spectrum(self, spectrum: list):
-        """
-        calculate a centroid spectrum from a profile spectrum
-
-        Parameters
-        ----------
-        spectrum : list
-            A list containing two ndarrays: m/z and intensities
-
-        Returns
-        -------
-        new_spectrum
-            A list with the centroid data
-        """
-        
-        # (26.09.2023)
-        mz, intensities = spectrum
-        quad_int = cumulative_trapezoid(intensities, x=mz, initial=0.0)
-        # indeterminate integral across the spectrum
-        mz_x_int = mz * intensities
-        # product of m/z * intensity
-
-        n = len(mz)
-        i = 0           # counter for the data points in the profile spectrum
-        j = 0           # counter for the peaks in the centroid spectrum
-        ready = False
-        mz2 = np.zeros(n)
-        intensities2 = np.zeros(n)
-
-        while ready != True:
-            while (i < n) and (intensities[i] != 0.0):  # find the first 0
-                i += 1
-            while (i < n) and (intensities[i] == 0.0):  # find the last 0
-                i += 1
-
-            if i < n:
-                start = i - 1       # last 0 before the peak
-            else:
-                ready = True        # end of the spectrum
-
-            while (i < n) and (intensities[i] != 0.0):
-                i += 1
-            
-            if i < n:
-                end = i             # first 0 after the peak
-            else:
-                ready = True        # end of the spectrum
-
-            if ready == False:
-                new_intensity = quad_int[end] - quad_int[start]
-                # determined integral over the peak
-                sum_mz_x_int = np.sum(mz_x_int[start:end+1])
-                # sum over m/z * intensity
-                sum_int = np.sum(intensities[start:end+1])
-                # sum of intensities
-                
-                new_mz = sum_mz_x_int / sum_int
-                #print('start =', start, 'end =', end, 'mz2 =', mz2, 'intensity2 =', intensity2)
-                mz2[j] = new_mz
-                intensities2[j] = new_intensity
-                j += 1
-
-        return [mz2[0:j], intensities2[0:j]]
-
     def check_centroid(self):
         """
         Is the spectrum in centroid mode?
@@ -665,3 +575,89 @@ class Maldi_MS():
                 return True
             elif median1 > 0:
                 return False
+
+    def centroid_data(self):
+        """
+        calculation of centroid data
+        """
+        
+        # (26.09.2023)
+        start_time1 = time.time()       # start time
+
+        if self.is_norm:
+            profile_spectra = copy.deepcopy(self.new_spectra)
+        else:
+            profile_spectra = self.spectra
+
+        self.new_spectra = []
+        for i, [mz, intensities] in enumerate(profile_spectra):
+            quadrature = integrate.cumulative_trapezoid(intensities, x=mz, initial=0.0)
+            # indeterminate integral across the spectrum
+
+            mask = intensities != 0     # search for values not equal to zero
+            mask = mask.astype(int)     # convert bool to 1 and 0
+            diff = np.diff(mask)
+
+            start_indices = np.where(diff ==  1)[0]     # find start and end indices
+            end_indices   = np.where(diff == -1)[0] + 1
+
+            if mask[0]:     # Is the first or the last element == 1?
+                start_indices = np.insert(start_indices, 0, 0)
+            if mask[-1]:
+                n = len(mz)
+                end_indices = np.append(end_indices, n-1)
+                
+            centroid_spectrum = centroid_numba(mz, intensities, quadrature, \
+                start_indices, end_indices)
+            self.new_spectra.append(centroid_spectrum)
+
+        self.is_centroid = True
+        stop_time1 = time.time()         # stop time
+        print('Calculating centroid data. Run time = %g seconds for %d spectra' \
+            % (stop_time1 - start_time1, self.num_spectra))
+
+
+@jit(nopython=True)
+def centroid_numba(mz, intensities, quadrature, start_indices, end_indices):
+    """
+    Calculate one centroid spectrum
+
+    Parameters
+    ----------
+    mz : ndarray
+        m/z values
+    intensities : ndarray
+        intensities of the m/z values
+    quadreature : ndarray
+        indeterminate integral across the spectrum
+    start_indices : ndarray
+        indices of the last m/z values before the peaks
+    end_indices : ndarray
+        indices of the first m/z value after the peak
+
+    Returns
+    -------
+    [new_mz, new_intensities] : list of two ndarrays
+        m/z values and intensities of the centroid spectrum
+    """
+    
+    csum_mz_int = np.cumsum(mz * intensities)
+    # cumulative sum over (m/z * intensity)
+    csum_int = np.cumsum(intensities)
+    # cumulative sum over all intensities
+
+    centroid_mz = np.zeros_like(start_indices)
+    centroid_intensities = np.zeros_like(start_indices)
+
+    for i in range(len(start_indices)):
+        start = start_indices[i]
+        end = end_indices[i]
+        sum_mz_int = csum_mz_int[end] - csum_mz_int[start]
+        # sum over m/z * intensity from start to end
+        sum_int = csum_int[end] - csum_int[start]
+        # sum over the intensities from start to end
+
+        centroid_mz[i] = sum_mz_int / sum_int
+        centroid_intensities[i] = quadrature[end] - quadrature[start]
+
+    return [centroid_mz, centroid_intensities]
