@@ -715,10 +715,12 @@ class SelectionWindow(QWidget):
         Calculates the true mean spectrum if necessary, then calls for the spectrum to be displayed
         """
         if not self.ms_object.norm_type in self.mean_spectra:
+            print("calculating..")
             worker = get_true_mean_spec(self.ms_object)
             worker.returned.connect(self.display_true_mean_spectrum)
             worker.start()
         else:
+            print("using existing spectrum")
             spectrum = self.mean_spectra[self.ms_object.norm_type]
             normalized = f"Normalized ({self.ms_object.norm_type})"
             title = f"{normalized if self.ms_object.is_norm else 'Original'} true mean"
@@ -771,7 +773,7 @@ class SelectionWindow(QWidget):
         """
         Exports the current spectrum as [insert file format here]
         """
-        file = save_dialog(self, "*.jpg")
+        file = save_dialog(self, "*.png")
         if file[0] == "":
             # No file path + name chosen
             return
