@@ -283,10 +283,13 @@ class Maldi_MS():
         """
 
         # Export of an ion image for the value m/z +/- tol (10.02.2023)
-        if self.is_norm or self.is_centroid:
-            return self.getionimage_new(self.p, mz, tol)
-        else:
-            return getionimage(self.p, mz, tol)
+        try:
+            if self.is_norm or self.is_centroid:
+                return self.getionimage_new(self.p, mz, tol)
+            else:
+                return getionimage(self.p, mz, tol)
+        except IndexError as exc:
+            raise RuntimeError("Error: metadata is incorrect") from exc
 
     def plot_ion_image(self, image):
         """
@@ -353,41 +356,28 @@ class Maldi_MS():
             else:
                 d['samples'] = sample_keys
 
+
+        d['max count x'] = self.p.imzmldict["max count of pixels x"]
+        d['max count y'] = self.p.imzmldict["max count of pixels y"]
         if 'scansettings1' in meta['scan_settings'].keys():
-            d['max count x'] = \
-                meta['scan_settings']['scansettings1']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scansettings1']['max count of pixels y']
             d['pixel size x'] = \
                 meta['scan_settings']['scansettings1']['pixel size (x)']
             d['pixel size y'] = \
                 meta['scan_settings']['scansettings1']['pixel size y']
             print("case 1!")
         elif 'scanSettings0' in meta['scan_settings'].keys():
-            d['max count x'] = \
-                meta['scan_settings']['scanSettings0']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scanSettings0']['max count of pixels y']
             d['pixel size x'] = \
                 meta['scan_settings']['scanSettings0']['pixel size (x)']
             d['pixel size y'] = \
                 meta['scan_settings']['scanSettings0']['pixel size y']
             print("case 2!")
         elif 'scan1' in meta['scan_settings'].keys():
-            d['max count x'] = \
-                meta['scan_settings']['scan1']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scan1']['max count of pixels y']
             d['pixel size x'] = \
                 meta['scan_settings']['scan1']['pixel size (x)']
             d['pixel size y'] = \
                 meta['scan_settings']['scan1']['pixel size (x)']
             print("case 3!")
         elif 'scansetting1' in meta['scan_settings'].keys():
-            d['max count x'] = \
-                meta['scan_settings']['scansetting1']['max count of pixels x']
-            d['max count y'] = \
-                meta['scan_settings']['scansetting1']['max count of pixels y']
             d['pixel size x'] = \
                 meta['scan_settings']['scansetting1']['pixel size (x)']
             d['pixel size y'] = \

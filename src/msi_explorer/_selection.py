@@ -114,7 +114,7 @@ class SelectionWindow(QWidget):
         # Labels
         label_mean = QLabel("Mean")
         label_mean.setMaximumWidth(80)
-        label_select_database = QLabel("Select database")
+        label_select_database = QLabel("Select Database")
         label_select_database.setMaximumWidth(180)
         label_search = QLabel("Search")
         label_search.setMaximumWidth(80)
@@ -182,7 +182,7 @@ class SelectionWindow(QWidget):
         self.btn_roi_mean.hide()
 
         # Radiobuttons
-        self.radio_btn_replace_layer = QRadioButton("Single panel_view")
+        self.radio_btn_replace_layer = QRadioButton("Single Panel_view")
         self.radio_btn_replace_layer.setMaximumWidth(180)
         radio_btn_add_layer = QRadioButton("Multi")
         radio_btn_add_layer.setMaximumWidth(80)
@@ -840,3 +840,13 @@ class SelectionWindow(QWidget):
             ])
         else:
             self.combobox_adduct.addItems(["exact mass"])
+        
+    def reset(self):
+        self.ms_object = None
+        self.current_spectrum = None
+        for ax in self.canvas.figure.axes:
+            ax.clear()
+            ax.set_xlabel("m/z")
+            ax.set_ylabel("intensity")
+
+        self.canvas.draw()
