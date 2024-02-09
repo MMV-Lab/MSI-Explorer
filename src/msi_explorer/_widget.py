@@ -69,13 +69,14 @@ class MSI_Explorer(QWidget):
         ### QObjects
         
         # Logo
-        filename = "placeholder.png"
+        filename = "logo.png"
         absolute_path = os.path.dirname(os.path.abspath(__file__))
         relative_path = os.path.join("ressources/",filename)
         path = os.path.join(absolute_path,relative_path)
         image = cv2.imread(path)
-        height, width, channel = image.shape
-        logo = QPixmap(QImage(image.data, width, height, 3* width, QImage.Format_BGR888))
+        rescaled_image = cv2.resize(image, (300, 300))
+        height, width, channel = rescaled_image.shape
+        logo = QPixmap(QImage(rescaled_image.data, width, height, 3* width, QImage.Format_BGR888))
 
         # Labels
         label_title = QLabel()
@@ -83,15 +84,17 @@ class MSI_Explorer(QWidget):
         label_title.setAlignment(Qt.AlignCenter)
         label_preprocessing = QLabel("Preprocessing")
         label_scale = QLabel("Scale:")
-        label_correction = QLabel("Mass calibration:")
-        label_correction_tooltip = "recalibration/baseline correction"
-        label_correction.setToolTip(label_correction_tooltip)
         label_noise_reduction = QLabel("noise reduction:")
         label_roi = QLabel("ROI")
         self.label_reference = QLabel("reference:")
 
         # Buttons
         btn_load_imzml = QPushButton("Load imzML")
+        btn_load_imzml.setStyleSheet('''
+                                     QPushButton {
+                                         font-size: 20px;
+                                     }
+                                ''')
         self.btn_view_metadata = QPushButton("View Metadata")
         self.btn_execute_preprocessing = QPushButton("Execute")
         self.btn_analyze_roi = QPushButton("Analyze")
@@ -122,7 +125,6 @@ class MSI_Explorer(QWidget):
         combobox_roi = QComboBox()
 
         # Lineedits
-        lineedit_correction = QLineEdit()
         self.lineedit_noise_reduction = QLineEdit()
         self.lineedit_noise_reduction.setText("100.0")
         self.lineedit_reference = QLineEdit()
@@ -178,13 +180,6 @@ class MSI_Explorer(QWidget):
         preprocessing_scale.layout().addWidget(self.lineedit_reference, 1, 1)
 
         self.preprocessing_frame.layout().addWidget(preprocessing_scale)
-
-        preprocessing_correction = QWidget()
-        preprocessing_correction.setLayout(QHBoxLayout())
-        preprocessing_correction.layout().addWidget(label_correction)
-        preprocessing_correction.layout().addWidget(lineedit_correction)
-
-        self.preprocessing_frame.layout().addWidget(preprocessing_correction)
 
         preprocessing_noise_reduction = QWidget()
         preprocessing_noise_reduction.setLayout(QHBoxLayout())
@@ -296,7 +291,18 @@ class MSI_Explorer(QWidget):
             self.ms_object, self.ms_object.get_spectrum(index)
         )
         self.selection_window.plot_spectrum(title=title)
-        self.selection_window.display_image_from_plot()
+        try:
+            self.selection_window.display_image_from_plot()
+        except RuntimeError:
+            msg = QMessageBox()
+            msg.setWindowTitle("Metadata Error")
+            msg.setText(
+                "Metadata is incorrect. Please make sure the max count x and y are correct."
+            )
+            msg.exec()
+            self.ms_object = None
+            self.selection_window.reset()
+            return
         self.selection_window.mean_spectra.clear()
 
         # enable buttons after loading data

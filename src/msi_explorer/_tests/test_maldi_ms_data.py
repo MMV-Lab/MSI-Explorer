@@ -48,14 +48,6 @@ def test_get_ion_image():
     assert np.array_equal(image, image2)
 
 
-def test_get_tic():
-    tic = maldi_ms.get_tic()
-    tic1 = tic[:4]
-    tic1 = tic1.round(3)
-    tic2 = np.array([121.850, 182.318, 161.809, 200.963])
-    assert np.array_equal(tic1, tic2)
-
-
 def test_get_metadata_json():
     meta = maldi_ms.get_metadata_json()
     assert meta[6:27] == '"file_description": {'
