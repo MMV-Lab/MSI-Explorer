@@ -570,33 +570,33 @@ class Maldi_MS():
         """
         calculation of centroid data
         """
-        
+
         # (26.09.2023)
         start_time1 = time.time()       # start time
 
         if self.is_norm:
-            profile_spectra = copy.deepcopy(self.new_spectra)
+            old_spectra = copy.deepcopy(self.new_spectra)
         else:
-            profile_spectra = self.spectra
+            old_spectra = self.spectra
 
         self.new_spectra = []
-        for i, [mz, intensities] in enumerate(profile_spectra):
-            quadrature = integrate.cumulative_trapezoid(intensities, x=mz, initial=0.0)
-            # indeterminate integral across the spectrum
-
+        for i, [mz, intensities] in enumerate(old_spectra):
             mask = intensities != 0     # search for values not equal to zero
             mask = mask.astype(int)     # convert bool to 1 and 0
             diff = np.diff(mask)
 
-            start_indices = np.where(diff ==  1)[0]     # find start and end indices
+            start_indices = np.where(diff == 1)[0]      # find start and end indices
             end_indices   = np.where(diff == -1)[0] + 1
 
-            if mask[0]:     # Is the first or the last element == 1?
+            if mask[0]:                 # Is the first or the last element == 1?
                 start_indices = np.insert(start_indices, 0, 0)
             if mask[-1]:
                 n = len(mz)
                 end_indices = np.append(end_indices, n-1)
                 
+            quadrature = integrate.cumulative_trapezoid(intensities, x=mz, \
+                initial=0.0)
+            # indeterminate integral across the spectrum
             centroid_spectrum = centroid_numba(mz, intensities, quadrature, \
                 start_indices, end_indices)
             self.new_spectra.append(centroid_spectrum)
@@ -605,6 +605,67 @@ class Maldi_MS():
         stop_time1 = time.time()         # stop time
         print('Calculating centroid data. Run time = %g seconds for %d spectra' \
             % (stop_time1 - start_time1, self.num_spectra))
+
+    def get_percentile(self, percentage: float):
+        """
+        get two arrays with all m/z and intensity data
+
+        Parameters
+        ----------
+        percentage : float or list of floats
+            percentage for the percentilwe to compute; 0. <= percentage <= 100.
+
+        Returns
+        -------
+        percentile : float or list of floats
+            calculated percentile
+        """
+
+        # (06.02.2024)
+        if self.is_norm or self.is_centroid:
+            spectra = self.new_spectra
+        else:
+            spectra = self.spectra
+
+        intensities = [ d[1] for d in spectra ]
+        all_intensities = np.concatenate(intensities)
+
+        # Remove the zeros from the intensities
+        if not self.is_centroid:
+            mask = all_intensities != 0
+            all_intensities = all_intensities[mask]
+
+        percentile1 = np.percentile(all_intensities, percentage)
+        return percentile1
+
+    def remove_hotspots(self):
+        """
+        remove all peaks with an intensity greater than the 99% percentile
+        """
+
+        # (14.02.2024)
+        if self.is_norm or self.is_centroid:
+            spectra = self.new_spectra
+        else:
+            spectra = self.spectra
+
+        p99 = self.get_percentile(99)
+
+        n = len(spectra)
+        for i in range(n):
+            mz, intensities = spectra[i]
+            # search for hot spots
+            filter = intensities > p99
+            intensities[filter] = p99
+
+        """
+        intensities = [ d[1] for d in spectra ]
+        all_intensities = np.concatenate(intensities)
+        plt.hist(all_intensities, bins=24, log=True)
+        plt.title('Histogram')
+        plt.xlabel('Intensities')
+        plt.ylabel('Frequency')
+        """
 
 
 @jit(nopython=True)
@@ -636,8 +697,8 @@ def centroid_numba(mz, intensities, quadrature, start_indices, end_indices):
     csum_int = np.cumsum(intensities)
     # cumulative sum over all intensities
 
-    centroid_mz = np.zeros_like(start_indices)
-    centroid_intensities = np.zeros_like(start_indices)
+    new_mz = np.zeros(len(start_indices))
+    new_intensities = np.zeros(len(start_indices))
 
     for i in range(len(start_indices)):
         start = start_indices[i]
@@ -647,7 +708,7 @@ def centroid_numba(mz, intensities, quadrature, start_indices, end_indices):
         sum_int = csum_int[end] - csum_int[start]
         # sum over the intensities from start to end
 
-        centroid_mz[i] = sum_mz_int / sum_int
-        centroid_intensities[i] = quadrature[end] - quadrature[start]
+        new_mz[i] = sum_mz_int / sum_int
+        new_intensities[i] = quadrature[end] - quadrature[start]
 
-    return [centroid_mz, centroid_intensities]
+    return [new_mz, new_intensities]
