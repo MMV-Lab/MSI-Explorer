@@ -11,7 +11,7 @@ Exports
 Maldi_MS
 """
 
-# Copyright © Peter Lampen, ISAS Dortmund, 2023
+# Copyright © Peter Lampen, ISAS Dortmund, 2023, 2024
 # (07.02.2023)
 
 import copy
@@ -26,14 +26,14 @@ from numba import jit
 
 class Maldi_MS():
     """
-    A class to store Maldi-MS data.
+    Class for storing and processing Maldi-MS data.
     
     Attributes
     ----------
     p : class ImzMLParser
         This is the result of the method ImzMLParser('NN.imzML')
     spectra : list
-        A list of sublists containing two ndarrays: m/z and intensity
+        A list of sublists containing two ndarrays: m/z and intensities
     new_spectra : list
         A list of sublists containing processed spectra
     is_norm : boolean
@@ -53,37 +53,41 @@ class Maldi_MS():
         class constructor
     check_i(i: int)
         check whether i is in the interval [0, num_spectra-1]
-    get_spectrum(i: int)
-        get a list with m/z and intensity of spectrum[i]
-    get_all_spectra()
-        get a list with all spectra
-    plot_spectrum(i: int)
-        plot spectrum[i] with matplotlib.pyplot
     get_num_spectra()
         get the number of spectra
     get_index(y: int, x: int)
         get the index of the spectrum at coordinates (x, y, 1)
     get_coordinates(i: int)
         get the coordinates (x, y, 1) of spectrum[i]
+    get_spectrum(i: int)
+        get a list with m/z and intensities of spectrum[i]
+    get_all_spectra()
+        get a list of sublists with all spectra
+    plot_spectrum(i: int, fmt : str)
+        plot spectrum[i] with matplotlib.pyplot
     get_ion_image(mz: float, tol: float)
         get a 2D ndarray with an ion image at m/z +/- tol
-    plot_ion_image(self, image: ndarray):
+    plot_ion_image(image: ndarray)
         2D plot of an ion image
     get_metadata_json()
         get a string of the metadata in JSON format
     get_metadata()
         get a dictionary with selected metadata
-    normalize(self, norm: str, mz0: float = 256.777, tol: float = 0.003)
+    normalize(norm: str, mz0: float = 121.0444, tol: float = 0.003)
         normalize the spectra by different methods: tic, rms, median, peak
-    getionimage_new(self, p, mz_value, tol=0.1, z=1, reduce_func=sum)
+    getionimage_new(p, mz_value, tol=0.1, z=1, reduce_func=sum)
         Get an image representation of the intensity distribution
         of the ion with specified m/z value.
-    peak_filtering(self, factor: float = 0.01)
+    get_percentile(percentage: float)
+        calculate the percentile of the intensities for a given percentage
+    noise_reduction(percentage: float = 0.1)
         remove small peaks < limit
-    centroid_data(self)
-        calculation of centroid data
-    check_centroid(self):
+    remove_hotspots(percentage: float = 99.0)
+        cut all peaks with an intensity greater than the n% percentile
+    check_centroid()
         is the spectrum in centroid mode?
+    centroid_data()
+        calculation of centroid data
     """
 
     def __init__(self, filename: str):
@@ -97,23 +101,23 @@ class Maldi_MS():
         """
 
         if not os.path.isfile(filename):        # Check if the file exists
-            raise FileNotFoundError(filename, 'don\'t exist')
+            raise FileNotFoundError(-1, 'The file ' + filename + ' don\'t exist')
 
-        p = ImzMLParser(filename)
-        self.p = p
+        parser = ImzMLParser(filename)
+        self.p = parser
         self.spectra = []           # empty list
         self.new_spectra = []
+        self.coordinates = []
         self.is_norm = False
         self.is_centroid = False
         self.norm_type = 'original' # Lennart
-        self.coordinates = []
 
-        for i, (x, y, z) in enumerate(p.coordinates):
-            mz, intensities = p.getspectrum(i)
-            self.spectra.append([mz, intensities])      # list of lists
+        for i, (x, y, z) in enumerate(parser.coordinates):
+            mz, intensities = parser.getspectrum(i)
+            self.spectra.append([mz, intensities])      # list of sublists
             self.coordinates.append((x, y, z))          # list of tuples
 
-        self.metadata = p.metadata.pretty()             # nested dictionary
+        self.metadata = parser.metadata.pretty()        # nested dictionary
         self.num_spectra = len(self.coordinates)        # number of spectra
 
     def check_i(self, i: int):
@@ -128,7 +132,7 @@ class Maldi_MS():
         Returns
         -------
         int
-            i if 0 <= i <= num_spectra-1
+            i if 0 <= i < num_spectra
             0 if i < 0
             num_spectra-1 if i >= num_spectra
         """
@@ -140,74 +144,11 @@ class Maldi_MS():
             i = 0
 
         # Is 0 <= i < self.num_spectra?
-        if i < 0: i = 0
+        if i < 0:
+            i = 0
         elif i >= self.num_spectra:
             i = self.num_spectra - 1
         return i
-
-    def get_spectrum(self, i: int):
-        """
-        get a list with m/z and intensity of spectrum[i]
-
-        Parameter
-        ---------
-        i : int
-            index of spectrum[i]
-
-        Returns
-        -------
-        list
-            A list of two ndarrays: m/z and Intensity of spectrum[i]
-        """
-
-        i = self.check_i(i)
-
-        if self.is_norm or self.is_centroid:
-            return self.new_spectra[i]
-        else:
-            return self.spectra[i]
-
-    def get_all_spectra(self):
-        """
-        get a list with all spectra
-
-        Returns
-        -------
-        list
-            A list of lists
-        """
-
-        # (17.05.2023)
-        if self.is_norm or self.is_centroid:
-            return self.new_spectra
-        else:
-            return self.spectra
-
-    def plot_spectrum(self, i: int = 0):
-        """
-        plot spectrum[i] with matplotlib.pyplot
-
-        Parameter
-        ---------
-        i : int
-            index of spectrum[i]
-        """
-
-        if self.is_norm or self.is_centroid:
-            mz, intensities = self.new_spectra[i]
-        else:
-            mz, intensities = self.spectra[i]
-
-        fig, ax = plt.subplots()
-
-        if self.is_centroid:
-            ax.stem(mz, intensities, markerfmt='none')
-        else:
-            ax.plot(mz, intensities)
-
-        title1 = 'Spectrum # %d' % (i)
-        ax.set(xlabel = 'm/z', ylabel = 'Intensity', title = title1)
-        plt.show()
 
     def get_num_spectra(self):
         """
@@ -241,8 +182,7 @@ class Maldi_MS():
         # Find the index (i) of a mass spectrum at the position (x, y, 1).
         # (21.02.2023)
         try:
-            i = self.coordinates.index((x, y, 1))
-            return i
+            return self.coordinates.index((x, y, 1))
         except BaseException:
             return -1
 
@@ -265,6 +205,73 @@ class Maldi_MS():
         i = self.check_i(i)
         return self.coordinates[i]
 
+    def get_spectrum(self, i: int):
+        """
+        get a list with m/z and intensities for spectrum[i]
+
+        Parameter
+        ---------
+        i : int
+            index of spectrum[i]
+
+        Returns
+        -------
+        list
+            A list of two ndarrays: m/z and intensities for spectrum[i]
+        """
+
+        i = self.check_i(i)
+
+        if self.is_norm or self.is_centroid:
+            return self.new_spectra[i]
+        else:
+            return self.spectra[i]
+
+    def get_all_spectra(self):
+        """
+        get a list of sublists with all spectra
+
+        Returns
+        -------
+        list
+            A list of sublists
+        """
+
+        # (17.05.2023)
+        if self.is_norm or self.is_centroid:
+            return self.new_spectra
+        else:
+            return self.spectra
+
+    def plot_spectrum(self, i: int = 0, fmt: str = '-'):
+        """
+        plot spectrum[i] with matplotlib.pyplot
+
+        Parameter
+        ---------
+        i : int
+            index of spectrum[i]
+        fmt : str
+            line style or marker
+        """
+
+        if self.is_norm or self.is_centroid:
+            mz, intensities = self.new_spectra[i]
+        else:
+            mz, intensities = self.spectra[i]
+
+        fig, ax = plt.subplots()
+
+        if self.is_centroid:
+            ax.stem(mz, intensities, markerfmt='none')
+        else:
+            ax.plot(mz, intensities, fmt)
+
+        coord = self.get_coordinates(i)
+        title1 = 'Spectrum %s # %d' % (coord, i)
+        ax.set(xlabel = 'm/z', ylabel = 'Intensity', title = title1)
+        plt.show()
+
     def get_ion_image(self, mz: float, tol: float = 0.1):
         """
         get a 2D numpy.ndarray with a single ion image at m/z +/- tol
@@ -279,10 +286,10 @@ class Maldi_MS():
         Returns
         -------
         numpy.ndarray
-            ndarray with an single ion image at given m/z +/- tol
+            2D ndarray with an single ion image at given m/z +/- tol
         """
 
-        # Export of an ion image for the value m/z +/- tol (10.02.2023)
+        # (10.02.2023)
         try:
             if self.is_norm or self.is_centroid:
                 return self.getionimage_new(self.p, mz, tol)
@@ -291,9 +298,9 @@ class Maldi_MS():
         except IndexError as exc:
             raise RuntimeError("Error: metadata is incorrect") from exc
 
-    def plot_ion_image(self, image):
+    def plot_ion_image(self, image, mz: float):
         """
-        plot the ion image calculateb by the function get_ion_image()
+        plot the ion image calculated by the function get_ion_image()
 
         Parameters
         ----------
@@ -304,8 +311,10 @@ class Maldi_MS():
         # (27.09.2023)
         fig, ax = plt.subplots()
         img = ax.imshow(image, interpolation='nearest', cmap='inferno')
+        title1 = 'm/z = %.4f Da' % (mz)
+        ax.set(xlabel = 'x', ylabel = 'y', title = title1)
         plt.colorbar(img)
-        return fig
+        #return fig
 
     def get_metadata_json(self):
         """
@@ -386,7 +395,7 @@ class Maldi_MS():
 
         return d
 
-    def normalize(self, norm: str, mz0: float = 256.777, tol: float = 0.003):
+    def normalize(self, norm: str, mz0: float = 121.0444, tol: float = 0.003):
         """
         normalization of the spectra
 
@@ -506,38 +515,101 @@ class Maldi_MS():
                 im[y - 1, x - 1] = reduce_func(ints[min_i:max_i+1])
         return im
 
-    def peak_filtering(self, factor: float = 0.01):
+    def get_percentile(self, percentage: float):
         """
-        remove small peaks < limit
+        calculate the percentile of the intensities for a given percentage
 
         Parameters
         ----------
-        factor : float
-            factor to calculate the limit: limit = maximum * factor
+        percentage : float or list of floats
+            percentage for the percentilwe to compute
+
+        Returns
+        -------
+        percentile : float or list of floats
+            calculated percentile of the intensities
         """
 
-        # (31.08.2023)
+        # (06.02.2024)
         if self.is_norm or self.is_centroid:
             spectra = self.new_spectra
         else:
             spectra = self.spectra
 
-        n = self.get_num_spectra()
-        for i in range(0, n):
-            spectrum = spectra[i]
-            mz, intensities = spectrum
+        intensities = [ d[1] for d in spectra ]
+        all_intensities = np.concatenate(intensities)
 
-            # search for peaks >= limit
-            maximum = intensities.max()
-            limit = maximum * factor
-            filter1 = intensities == 0.0
-            filter2 = intensities >= limit
-            filter3 = np.logical_or(filter1, filter2)
+        # Remove the zeros from the intensities
+        if not self.is_centroid:
+            mask = all_intensities != 0
+            all_intensities = all_intensities[mask]
 
-            # store peaks > limit and zeros
-            mz2 = mz[filter3]
-            intensities2 = intensities[filter3]
-            spectra[i] = [mz2, intensities2]
+        percentile1 = np.percentile(all_intensities, percentage)
+        return percentile1
+
+    def noise_reduction(self, percentage: float = 0.01):
+        """
+        remove small peaks < limit
+
+        Parameters
+        ----------
+        percentage : float
+            percentage for the calculation of the percentile
+        """
+
+        # (31.08.2023, neu 23.02.2024)
+        if self.is_norm or self.is_centroid:
+            spectra = self.new_spectra
+        else:
+            spectra = self.spectra
+
+        limit = self.get_percentile(percentage)
+        print('Noise reduction: limit =', limit)
+
+        n = len(spectra)
+        for i in range(n):
+            intens0 = spectra[i][1]
+            intensities = np.copy(intens0)
+
+            # search for peaks < limit
+            filter1 = intensities != 0.0
+            filter2 = intensities < limit
+            filter3 = np.logical_and(filter1, filter2)
+            intensities[filter3] = 0.0
+            spectra[i][1] = intensities
+
+    def remove_hotspots(self, percentage: float = 99.0):
+        """
+        cut all peaks with an intensity greater than the n% percentile
+        """
+
+        # (14.02.2024)
+        if self.is_norm or self.is_centroid:
+            spectra = self.new_spectra
+        else:
+            spectra = self.spectra
+
+        limit = self.get_percentile(percentage)
+        print('Hotspot removal: limit =', limit)
+
+        n = len(spectra)
+        for i in range(n):
+            intens0 = spectra[i][1]
+            intensities = np.copy(intens0)
+
+            # search for hotspots
+            filter = intensities > limit
+            intensities[filter] = limit
+            spectra[i][1] = intensities
+
+        """
+        intensities = [ d[1] for d in spectra ]
+        all_intensities = np.concatenate(intensities)
+        plt.hist(all_intensities, bins=24, log=True)
+        plt.title('Histogram')
+        plt.xlabel('Intensities')
+        plt.ylabel('Frequency')
+        """
 
     def check_centroid(self):
         """
@@ -605,67 +677,6 @@ class Maldi_MS():
         stop_time1 = time.time()         # stop time
         print('Calculating centroid data. Run time = %g seconds for %d spectra' \
             % (stop_time1 - start_time1, self.num_spectra))
-
-    def get_percentile(self, percentage: float):
-        """
-        get two arrays with all m/z and intensity data
-
-        Parameters
-        ----------
-        percentage : float or list of floats
-            percentage for the percentilwe to compute; 0. <= percentage <= 100.
-
-        Returns
-        -------
-        percentile : float or list of floats
-            calculated percentile
-        """
-
-        # (06.02.2024)
-        if self.is_norm or self.is_centroid:
-            spectra = self.new_spectra
-        else:
-            spectra = self.spectra
-
-        intensities = [ d[1] for d in spectra ]
-        all_intensities = np.concatenate(intensities)
-
-        # Remove the zeros from the intensities
-        if not self.is_centroid:
-            mask = all_intensities != 0
-            all_intensities = all_intensities[mask]
-
-        percentile1 = np.percentile(all_intensities, percentage)
-        return percentile1
-
-    def remove_hotspots(self):
-        """
-        remove all peaks with an intensity greater than the 99% percentile
-        """
-
-        # (14.02.2024)
-        if self.is_norm or self.is_centroid:
-            spectra = self.new_spectra
-        else:
-            spectra = self.spectra
-
-        p99 = self.get_percentile(99)
-
-        n = len(spectra)
-        for i in range(n):
-            mz, intensities = spectra[i]
-            # search for hot spots
-            filter = intensities > p99
-            intensities[filter] = p99
-
-        """
-        intensities = [ d[1] for d in spectra ]
-        all_intensities = np.concatenate(intensities)
-        plt.hist(all_intensities, bins=24, log=True)
-        plt.title('Histogram')
-        plt.xlabel('Intensities')
-        plt.ylabel('Frequency')
-        """
 
 
 @jit(nopython=True)
