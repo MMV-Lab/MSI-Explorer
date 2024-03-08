@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+# from typing import TYPE_CHECKING
 import warnings
 import os
 
@@ -11,10 +11,10 @@ from qtpy.QtWidgets import (
     QVBoxLayout,
     QScrollArea,
     QLineEdit,
-    QFrame,
     QMessageBox,
     QApplication,
     QGridLayout,
+    QGroupBox,
 )
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QImage, QPixmap
@@ -25,8 +25,8 @@ from ._metadata import MetadataWindow
 from ._reader import open_dialog, napari_get_reader
 from ._analysis import AnalysisWindow
 
-if TYPE_CHECKING:
-    import napari
+# if TYPE_CHECKING:
+#     import napari
 
 
 class MSI_Explorer(QWidget):
@@ -75,17 +75,15 @@ class MSI_Explorer(QWidget):
         path = os.path.join(absolute_path,relative_path)
         image = cv2.imread(path)
         rescaled_image = cv2.resize(image, (300, 300))
-        height, width, channel = rescaled_image.shape
+        height, width, _ = rescaled_image.shape
         logo = QPixmap(QImage(rescaled_image.data, width, height, 3* width, QImage.Format_BGR888))
 
         # Labels
         label_title = QLabel()
         label_title.setPixmap(logo)
         label_title.setAlignment(Qt.AlignCenter)
-        label_preprocessing = QLabel("Preprocessing")
         label_scale = QLabel("Scale:")
         label_noise_reduction = QLabel("noise reduction:")
-        label_roi = QLabel("ROI")
         self.label_reference = QLabel("reference:")
 
         # Buttons
@@ -132,6 +130,23 @@ class MSI_Explorer(QWidget):
         self.lineedit_reference.hide()
         self.label_reference.hide()
 
+        # Groupboxes
+        self.groupbox_preprocessing = QGroupBox()
+        self.groupbox_preprocessing.setTitle("Preprocessing")
+        preprocessing_layout = QGridLayout()
+        preprocessing_layout.addWidget(btn_minimize_preprocessing, 0, 3)
+        preprocessing_layout.addWidget(label_scale, 1, 0, 1, 1)
+        preprocessing_layout.addWidget(self.combobox_scale, 1, 1, 1, 2)
+        preprocessing_layout.addWidget(label_noise_reduction, 2, 0, 1, 1)
+        preprocessing_layout.addWidget(self.lineedit_noise_reduction, 2, 1, 1, 2)
+        
+        self.groupbox_preprocessing.setLayout(preprocessing_layout)
+        self.groupbox_roi = QGroupBox()
+        self.groupbox_roi.setTitle("ROI")
+        self.groupbox_roi.setLayout(QHBoxLayout())
+        self.groupbox_roi.layout().addWidget(combobox_roi)
+        self.groupbox_roi.layout().addWidget(self.btn_analyze_roi)
+
         ### Organize objects via widgets
         # widget: parent widget of all content
         widget = QWidget()
@@ -151,74 +166,8 @@ class MSI_Explorer(QWidget):
         )
         self.btn_maximize_preprocessing.hide()
 
-        self.preprocessing_frame = QFrame()
-        self.preprocessing_frame.setObjectName("preprocessingFrame")
-        self.preprocessing_frame.setLayout(QVBoxLayout())
-
-        """self.preprocessing_frame.setStyleSheet(
-            "border-width: 1;"
-            "border-radius: 3;"
-            "border-style: solid;"
-            "border-color: rgb(240, 240, 240);"
-        )"""
-
-        preprocessing_header = QWidget()
-        preprocessing_header.setLayout(QHBoxLayout())
-        preprocessing_header.layout().addWidget(label_preprocessing)
-        preprocessing_header.layout().addWidget(btn_minimize_preprocessing)
-        preprocessing_header.layout().setAlignment(
-            btn_minimize_preprocessing, Qt.AlignRight
-        )
-
-        self.preprocessing_frame.layout().addWidget(preprocessing_header)
-
-        preprocessing_scale = QWidget()
-        preprocessing_scale.setLayout(QGridLayout())
-        preprocessing_scale.layout().addWidget(label_scale, 0, 0)
-        preprocessing_scale.layout().addWidget(self.combobox_scale, 0, 1)
-        preprocessing_scale.layout().addWidget(self.label_reference, 1, 0)
-        preprocessing_scale.layout().addWidget(self.lineedit_reference, 1, 1)
-
-        self.preprocessing_frame.layout().addWidget(preprocessing_scale)
-
-        preprocessing_noise_reduction = QWidget()
-        preprocessing_noise_reduction.setLayout(QHBoxLayout())
-        preprocessing_noise_reduction.layout().addWidget(label_noise_reduction)
-        preprocessing_noise_reduction.layout().addWidget(
-            self.lineedit_noise_reduction
-        )
-
-        self.preprocessing_frame.layout().addWidget(
-            preprocessing_noise_reduction
-        )
-
-        self.preprocessing_frame.layout().addWidget(
-            self.btn_execute_preprocessing
-        )
-
-        widget.layout().addWidget(self.preprocessing_frame)
-
-        roi_frame = QFrame()
-        roi_frame.setObjectName("roiFrame")
-        roi_frame.setLayout(QVBoxLayout())
-
-        self.setStyleSheet(".QFrame {border-width: 1; border-radius: 3;border-style: solid;border-color: rgb(240, 240, 240)}")
-        """roi_frame.setStyleSheet(
-            "border-width: 1;"
-            "border-radius: 3;"
-            "border-style: solid;"
-            "border-color: rgb(10, 10, 10);"
-        )"""
-        roi_frame.layout().addWidget(label_roi)
-
-        roi_selection = QWidget()
-        roi_selection.setLayout(QHBoxLayout())
-        roi_selection.layout().addWidget(combobox_roi)
-        roi_selection.layout().addWidget(self.btn_analyze_roi)
-
-        roi_frame.layout().addWidget(roi_selection)
-
-        widget.layout().addWidget(roi_frame)
+        widget.layout().addWidget(self.groupbox_preprocessing)
+        widget.layout().addWidget(self.groupbox_roi)
 
         # Scrollarea allows content to be larger than assigned space (small monitor)
         scroll_area = QScrollArea()
@@ -347,13 +296,13 @@ class MSI_Explorer(QWidget):
         Hides preprocessing steps
         """
         self.btn_maximize_preprocessing.show()
-        self.preprocessing_frame.hide()
+        self.groupbox_preprocessing.hide()
 
     def _show_preprocessing(self):
         """
         Shows preprocessing steps
         """
-        self.preprocessing_frame.show()
+        self.groupbox_preprocessing.show()
         self.btn_maximize_preprocessing.hide()
 
     def toggle_reference_selection(self, metric):
@@ -363,3 +312,6 @@ class MSI_Explorer(QWidget):
         else:
             self.label_reference.hide()
             self.lineedit_reference.hide()
+
+    def refresh_colorbar(self):
+        print(self.viewer.layers[self.viewer.layers.index("main view")].colorbar)

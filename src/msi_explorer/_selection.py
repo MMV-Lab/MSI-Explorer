@@ -439,7 +439,7 @@ class SelectionWindow(QWidget):
         self.SCALE_FACTOR = int(math.sqrt(5000000 / image.size))
         width = image.shape[1] * self.SCALE_FACTOR
         height = image.shape[0] * self.SCALE_FACTOR
-        dim = (width, height)
+        dims = (height, width)
         image = cv2.resize(image, None, fx = self.SCALE_FACTOR, fy = self.SCALE_FACTOR, interpolation = cv2.INTER_NEAREST)
         print(f"scaling image with factor {self.SCALE_FACTOR} for a total of {image.size} pixels")
         if self.radio_btn_replace_layer.isChecked():
@@ -457,48 +457,83 @@ class SelectionWindow(QWidget):
             )
             layer = self.viewer.add_image(image, name=layername, colormap="inferno")
         
+        def on_colormap_change(event):
+            self.add_colorbar(event.source)
+        layer.events.colormap.connect(on_colormap_change)
+
+        self.add_colorbar(layer)
+
+    def add_colorbar(self, layer):
+        """
+        Adds a colorbar for the image
+        """
         try:
             self.viewer.layers.remove("colorbar")
         except ValueError:
             pass
-        if hasattr(self.parent, "metadata"):
-            metadata = self.parent.metadata
-        else:
-            metadata = self.parent.ms_object.get_metadata()
-        width = metadata['max count x']
-        height = metadata['max count y']
-        colorbar_horizontal = self.viewer.layers[self.viewer.layers.index("main view")].colormap.colorbar[0]
-        
-        zeros = np.zeros((height * self.SCALE_FACTOR, width * self.SCALE_FACTOR,4), dtype = 'uint8')
+
+        dims = (layer.data.shape[0], layer.data.shape[1])
+        colorbar = self.generate_colorbar(layer, dims, self.SCALE_FACTOR)
+        layer = self.viewer.add_image(colorbar, name = "colorbar", rgb = True)
+        self.viewer.layers.move(self.viewer.layers.index(layer))
+        self.viewer.layers.select_next(len(self.viewer.layers) - 1)
+
+    def generate_colorbar(self, layer, dims, scale_factor):
+        """
+        Generates a colorbar for the image
+
+        Parameters
+        ----------
+        layer : Image
+            the image to generate the colorbar for
+        dims : tuple
+            dimensions of the image (height, width)
+        scale_factor : int
+            the scale factor of the image
+        """
+        colorbar_horizontal = layer.colormap.colorbar[0]
+        height, width = dims
+
+        zeros = np.zeros((height, width, 4), dtype="uint8")
         bottom = width > height
+        colorbar = np.asarray([colorbar_horizontal])
         if bottom:
-            colorbar = np.asarray([colorbar_horizontal])
-            fx = int(width * self.SCALE_FACTOR / colorbar.shape[1])
-            fy = self.SCALE_FACTOR * max(1, int(width /colorbar.shape[1] / 3))
+            fx = int(width / colorbar.shape[1])
+            fy = scale_factor * max(1, int(width / scale_factor / colorbar.shape[1] / 3))
             colorbar = cv2.resize(
                 colorbar,
                 None,
-                fx = fx,
-                fy = fy,
-                interpolation = cv2.INTER_NEAREST
+                fx=fx,
+                fy=fy,
+                interpolation=cv2.INTER_NEAREST,
             )
-            colorbar = np.pad(colorbar, [(2*fy,2 * fx),(0, zeros.shape[1] - colorbar.shape[1]),(0,0)], mode = 'constant')
+            colorbar = np.pad(
+                colorbar,
+                [(2 * fy, 2 * fx), (0, zeros.shape[1] - colorbar.shape[1]), (0, 0)],
+                mode="constant",
+            )
             colorbar = np.concatenate((zeros, colorbar), 0)
         else:
-            colorbar = np.asarray([colorbar_horizontal])
             colorbar = np.rot90(colorbar)
-            fy = int(height * self.SCALE_FACTOR / colorbar.shape[0])
-            fx = self.SCALE_FACTOR * max(1,int(height / colorbar.shape[0] / 3))
+            fy = int(height / colorbar.shape[0])
+            fx = scale_factor * max(1, int(height / scale_factor / colorbar.shape[0] / 3))
             colorbar = cv2.resize(
                 colorbar,
                 None,
-                fx = fx,
-                fy = fy,
-                interpolation = cv2.INTER_NEAREST
+                fx=fx,
+                fy=fy,
+                interpolation=cv2.INTER_NEAREST,
             )
             if zeros.shape[0] < colorbar.shape[0]:
-                zeros = np.pad(zeros, [(0, colorbar.shape[0] - zeros.shape[0]), (0,0),(0,0)])
-            colorbar = np.pad(colorbar, [(0, zeros.shape[0] - colorbar.shape[0]), (2*fx,6*fy) ,(0,0)], mode = 'constant')
+                zeros = np.pad(
+                    zeros,
+                    [(0, colorbar.shape[0] - zeros.shape[0]), (0, 0), (0, 0)],
+                )
+            colorbar = np.pad(
+                colorbar,
+                [(0, zeros.shape[0] - colorbar.shape[0]), (2 * fx, 6 * fy), (0, 0)],
+                mode="constant",
+            )
             colorbar = np.concatenate((zeros, colorbar), 1)
         
         img = Image.fromarray(colorbar)
@@ -520,9 +555,7 @@ class SelectionWindow(QWidget):
             draw.text((posy, (colorbar.shape[0] - fontsize) / 2), "{:.0e}".format((maximum - minimum) / 2), (255, 255, 255), font = font)
             draw.text((posy, colorbar.shape[0] - fontsize), "{:.0e}".format(minimum), (255, 255, 255), font = font)
         colorbar = np.asarray(img)
-        layer = self.viewer.add_image(colorbar, name = "colorbar", rgb = True)
-        self.viewer.layers.move(self.viewer.layers.index(layer))
-        self.viewer.layers.select_next(len(self.viewer.layers) - 1)
+        return colorbar
 
     # Sets MAldiMsData object
     def set_data(self, ms_data, data):
@@ -632,11 +665,11 @@ class SelectionWindow(QWidget):
             self.label_mz_annotation.setToolTip("")
             return
         try:
-            name = self.modified_metabolites[str(mz)][0]
+            name = self.modified_metabolites[str(mz)][0][0]
         except ValueError:
             return
         self.label_mz_annotation.setText(name)
-        description = self.modified_metabolites[str(mz)][1]
+        description = self.modified_metabolites[str(mz)][0][1]
         self.label_mz_annotation.setToolTip(description)
 
     def filter_mzs(self):
@@ -644,17 +677,34 @@ class SelectionWindow(QWidget):
         Filters the metabolites' m/z values displayed in the self.combobox_mz to display only those
         matching the filter_text. Checks m/z value, name and description.
         """
-        filter_text = self.lineedit_mz_filter.text()
+        filter_text = self.lineedit_mz_filter.text().lower()
         self.combobox_mz.clear()
         for entry in self.modified_metabolites:
-            if (
-                filter_text.lower() in str(entry).lower()
-                or filter_text.lower()
-                in self.modified_metabolites[str(entry)][0].lower()
-                or filter_text.lower()
-                in self.modified_metabolites[str(entry)][1].lower()
-            ):
+            string_list = [str(entry).lower()]
+            string_list.extend(
+                [metabolite[0].lower() for metabolite in self.modified_metabolites[str(entry)]]
+            )
+            string_list.extend(
+                [metabolite[1].lower() for metabolite in self.modified_metabolites[str(entry)]]
+            )
+            if self.has_substring(string_list, filter_text):
                 self.combobox_mz.addItem(entry)
+
+    def has_substring(self, string_list, query):
+        """
+        Checks if any of the strings in string_list contain the query
+
+        Parameters
+        ----------
+        string_list : list
+            list of strings to check
+        query : str
+            string to check for in string_list
+        """
+        for string in string_list:
+            if query in string:
+                return True
+        return False
 
     def display_image_from_plot(self):
         """
