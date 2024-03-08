@@ -15,6 +15,7 @@ from qtpy.QtWidgets import (
     QApplication,
     QGridLayout,
     QGroupBox,
+    QCheckBox,
 )
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QImage, QPixmap
@@ -82,9 +83,10 @@ class MSI_Explorer(QWidget):
         label_title = QLabel()
         label_title.setPixmap(logo)
         label_title.setAlignment(Qt.AlignCenter)
-        label_scale = QLabel("Scale:")
-        label_noise_reduction = QLabel("noise reduction:")
-        self.label_reference = QLabel("reference:")
+        label_scale = QLabel("Normalization:")
+        label_noise_reduction = QLabel("Noise reduction:")
+        label_hotspot_removal = QLabel("Hotspot removal:")
+        self.label_reference = QLabel("Reference:")
 
         # Buttons
         btn_load_imzml = QPushButton("Load imzML")
@@ -124,21 +126,32 @@ class MSI_Explorer(QWidget):
 
         # Lineedits
         self.lineedit_noise_reduction = QLineEdit()
-        self.lineedit_noise_reduction.setText("100.0")
+        self.lineedit_noise_reduction.setText("0.01")
+        self.lineedit_hotspot_removal = QLineEdit()
+        self.lineedit_hotspot_removal.setText("99.99")
         self.lineedit_reference = QLineEdit()
         self.lineedit_reference.setPlaceholderText("M/Z")
         self.lineedit_reference.hide()
         self.label_reference.hide()
+
+        # QCheckBox
+        self.checkbox_noise_reduction = QCheckBox("")
+        self.checkbox_hotspot_removal = QCheckBox("")
 
         # Groupboxes
         self.groupbox_preprocessing = QGroupBox()
         self.groupbox_preprocessing.setTitle("Preprocessing")
         preprocessing_layout = QGridLayout()
         preprocessing_layout.addWidget(btn_minimize_preprocessing, 0, 3)
-        preprocessing_layout.addWidget(label_scale, 1, 0, 1, 1)
-        preprocessing_layout.addWidget(self.combobox_scale, 1, 1, 1, 2)
-        preprocessing_layout.addWidget(label_noise_reduction, 2, 0, 1, 1)
-        preprocessing_layout.addWidget(self.lineedit_noise_reduction, 2, 1, 1, 2)
+        preprocessing_layout.addWidget(label_noise_reduction, 1, 0, 1, 1)
+        preprocessing_layout.addWidget(self.lineedit_noise_reduction, 1, 1, 1, 2)
+        preprocessing_layout.addWidget(self.checkbox_noise_reduction, 1, 3, 1, 1)
+        preprocessing_layout.addWidget(label_scale, 2, 0, 1, 1)
+        preprocessing_layout.addWidget(self.combobox_scale, 2, 1, 1, 2)
+        preprocessing_layout.addWidget(label_hotspot_removal, 3, 0, 1, 1)
+        preprocessing_layout.addWidget(self.lineedit_hotspot_removal, 3, 1, 1, 2)
+        preprocessing_layout.addWidget(self.checkbox_hotspot_removal, 3, 3, 1, 1)
+        preprocessing_layout.addWidget(self.btn_execute_preprocessing, 10, 1, 1, 1)
         
         self.groupbox_preprocessing.setLayout(preprocessing_layout)
         self.groupbox_roi = QGroupBox()
@@ -268,20 +281,44 @@ class MSI_Explorer(QWidget):
 
     def preprocess(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        if self.checkbox_noise_reduction.isChecked():
+            try:
+                filter_limit = float(self.lineedit_noise_reduction.text())
+            except ValueError:
+                msg = QMessageBox()
+                msg.setWindowTitle("Error")
+                msg.setText("Noise reduction value is not a number")
+                msg.exec()
+                return
+            if filter_limit < 0 or filter_limit > 100:
+                msg = QMessageBox()
+                msg.setWindowTitle("Error")
+                msg.setText("Noise reduction value must be between 0 and 100")
+                msg.exec()
+                return
+            self.ms_object.noise_reduction(filter_limit)
         normalization_method = self.combobox_scale.currentText()
         if self.lineedit_reference.text() != "":
             mz = float(self.lineedit_reference.text())
             self.ms_object.normalize(normalization_method, mz)
         else:
             self.ms_object.normalize(normalization_method)
-        try:
-            filter_limit = float(self.lineedit_noise_reduction.text())
-        except ValueError:
-            pass
-        else:
-            if filter_limit > 0 and filter_limit < 100:
-                print("running")
-                self.ms_object.peak_filtering(filter_limit / 100)
+        if self.checkbox_hotspot_removal.isChecked():
+            try:
+                filter_limit = float(self.lineedit_hotspot_removal.text())
+            except ValueError:
+                msg = QMessageBox()
+                msg.setWindowTitle("Error")
+                msg.setText("Hotspot removal value is not a number")
+                msg.exec()
+                return
+            if filter_limit < 0 or filter_limit > 100:
+                msg = QMessageBox()
+                msg.setWindowTitle("Error")
+                msg.setText("Hotspot removal value must be between 0 and 100")
+                msg.exec()
+                return
+            self.ms_object.remove_hotspots(filter_limit)
         QApplication.restoreOverrideCursor()
 
     def _analyze(self):
@@ -312,6 +349,3 @@ class MSI_Explorer(QWidget):
         else:
             self.label_reference.hide()
             self.lineedit_reference.hide()
-
-    def refresh_colorbar(self):
-        print(self.viewer.layers[self.viewer.layers.index("main view")].colorbar)
