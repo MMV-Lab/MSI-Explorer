@@ -385,6 +385,8 @@ class SelectionWindow(QWidget):
         if title is None:
             title = self.axes.get_title()
         self.axes.clear()
+        self.axes.set_xlabel("m/z")
+        self.axes.set_ylabel("intensity")
         if spectrum is None:
             spectrum = self.current_spectrum
         if self.ms_object.check_centroid():

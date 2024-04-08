@@ -12,8 +12,9 @@ class AnalysisWindow(QWidget):
         Temporary placeholder function
     """
 
-    def __init__(self):
+    def __init__(self, viewer):
         super().__init__()
+        self.viewer = viewer
         self.setLayout(QGridLayout())
 
         ### QObjects
