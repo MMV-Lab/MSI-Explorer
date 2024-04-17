@@ -1,7 +1,6 @@
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 from ._maldi_ms_data import Maldi_MS
-from ._analysis import AnalysisWindow
 from ._database import DatabaseWindow
 from ._reader import napari_get_reader
 from ._widget import MSI_Explorer
@@ -11,7 +10,6 @@ from ._metadata import MetadataWindow
 
 __all__ = (
     "Maldi_MS",
-    "AnalysisWindow",
     "DatabaseWindow",
     "napari_get_reader",
     "write_metadata",

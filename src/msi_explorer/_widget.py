@@ -24,7 +24,6 @@ import cv2
 from ._selection import SelectionWindow
 from ._metadata import MetadataWindow
 from ._reader import open_dialog, napari_get_reader
-from ._analysis import AnalysisWindow
 
 # if TYPE_CHECKING:
 #     import napari
@@ -61,7 +60,7 @@ class MSI_Explorer(QWidget):
         """
         Parameters
         ----------
-        viewer : Viewer
+        napari_viewer : Viewer
             The Napari viewer instance
         """
         super().__init__()
@@ -97,13 +96,11 @@ class MSI_Explorer(QWidget):
                                 ''')
         self.btn_view_metadata = QPushButton("View Metadata")
         self.btn_execute_preprocessing = QPushButton("Execute")
-        self.btn_analyze_roi = QPushButton("Analyze")
         btn_minimize_preprocessing = QPushButton("-")
         self.btn_maximize_preprocessing = QPushButton("+")
 
         self.btn_view_metadata.clicked.connect(self.open_metadata)
         btn_load_imzml.clicked.connect(self._open_file)
-        self.btn_analyze_roi.clicked.connect(self._analyze)
         self.btn_execute_preprocessing.clicked.connect(self.preprocess)
         btn_minimize_preprocessing.clicked.connect(self._hide_preprocessing)
         self.btn_maximize_preprocessing.clicked.connect(
@@ -112,7 +109,6 @@ class MSI_Explorer(QWidget):
 
         self.btn_view_metadata.setEnabled(False)
         self.btn_execute_preprocessing.setEnabled(False)
-        self.btn_analyze_roi.setEnabled(False)
 
         # Comboboxes
         self.combobox_scale = QComboBox()
@@ -122,7 +118,6 @@ class MSI_Explorer(QWidget):
         self.combobox_scale.currentTextChanged.connect(
             self.toggle_reference_selection
         )
-        combobox_roi = QComboBox()
 
         # Lineedits
         self.lineedit_noise_reduction = QLineEdit()
@@ -154,11 +149,11 @@ class MSI_Explorer(QWidget):
         preprocessing_layout.addWidget(self.btn_execute_preprocessing, 10, 1, 1, 1)
         
         self.groupbox_preprocessing.setLayout(preprocessing_layout)
-        self.groupbox_roi = QGroupBox()
-        self.groupbox_roi.setTitle("ROI")
-        self.groupbox_roi.setLayout(QHBoxLayout())
-        self.groupbox_roi.layout().addWidget(combobox_roi)
-        self.groupbox_roi.layout().addWidget(self.btn_analyze_roi)
+        # self.groupbox_roi = QGroupBox()
+        # self.groupbox_roi.setTitle("ROI")
+        # self.groupbox_roi.setLayout(QHBoxLayout())
+        # self.groupbox_roi.layout().addWidget(combobox_roi)
+        # self.groupbox_roi.layout().addWidget(self.btn_analyze_roi)
 
         ### Organize objects via widgets
         # widget: parent widget of all content
@@ -180,7 +175,6 @@ class MSI_Explorer(QWidget):
         self.btn_maximize_preprocessing.hide()
 
         widget.layout().addWidget(self.groupbox_preprocessing)
-        widget.layout().addWidget(self.groupbox_roi)
 
         # Scrollarea allows content to be larger than assigned space (small monitor)
         scroll_area = QScrollArea()
@@ -270,7 +264,6 @@ class MSI_Explorer(QWidget):
         # enable buttons after loading data
         self.btn_view_metadata.setEnabled(True)
         self.btn_execute_preprocessing.setEnabled(True)
-        self.btn_analyze_roi.setEnabled(True)
         self.selection_window.btn_reset_view.setEnabled(True)
         self.selection_window.btn_display_current_view.setEnabled(True)
         self.selection_window.btn_select_roi.setEnabled(True)
@@ -320,13 +313,6 @@ class MSI_Explorer(QWidget):
                 return
             self.ms_object.remove_hotspots(filter_limit)
         QApplication.restoreOverrideCursor()
-
-    def _analyze(self):
-        """
-        Opens an [AnalysisWindow]
-        """
-        self.analysis_window = AnalysisWindow(self.viewer)
-        self.analysis_window.show()
 
     def _hide_preprocessing(self):
         """
